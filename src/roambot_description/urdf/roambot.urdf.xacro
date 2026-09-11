@@ -1,0 +1,560 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="roambot">
+
+  <!-- ========================================================= -->
+  <!-- TRI-ROVER: Concept 2WD differential-drive mobile robot    -->
+  <!-- Simplified physical model designed for ROS 2 / Gazebo     -->
+  <!-- Units: SI (meters, kilograms, radians)                     -->
+  <!-- ========================================================= -->
+
+  <!-- - Parameters - -->
+  <xacro:property name="body_length" value="0.30"/>
+  <xacro:property name="body_width"  value="0.22"/>
+  <xacro:property name="body_height" value="0.045"/>
+
+  <xacro:property name="upper_length" value="0.255"/>
+  <xacro:property name="upper_width"  value="0.175"/>
+  <xacro:property name="upper_height" value="0.020"/>
+
+  <!-- Three standoff pillars matching the reversed triangular upper deck -->
+  <xacro:property name="pillar_radius" value="0.008"/>
+  <xacro:property name="pillar_height" value="0.040"/>
+
+  <!-- Two front corner pillars -->
+  <xacro:property name="pillar_front_x" value="0.070"/>
+  <xacro:property name="pillar_front_y" value="0.060"/>
+
+  <!-- One rear pillar centred below the short rear edge -->
+  <xacro:property name="pillar_rear_x" value="-0.090"/>
+  <xacro:property name="pillar_rear_y" value="0.000"/>
+
+  <!-- Capsule-shaped chassis: straight sides + rounded front + rounded rear -->
+  <xacro:property name="chassis_width" value="0.205"/>
+  <xacro:property name="chassis_total_length" value="0.300"/>
+  <xacro:property name="chassis_round_radius" value="${chassis_width / 2.0}"/>
+
+  <!-- Distance between the two rounded-end centres -->
+  <xacro:property name="chassis_straight_length"
+                  value="${chassis_total_length - 2.0 * chassis_round_radius}"/>
+
+  <!-- Front and rear circle centres -->
+  <xacro:property name="chassis_front_x"
+                  value="${chassis_straight_length / 2.0}"/>
+  <xacro:property name="chassis_rear_x"
+                  value="${-chassis_straight_length / 2.0}"/>
+
+  <!-- Primitive-only clipped triangular upper deck -->
+  <xacro:property name="deck_rail_width" value="0.030"/>
+
+  <!-- Outer corner centres -->
+  <xacro:property name="deck_front_x" value="0.075"/>
+  <xacro:property name="deck_front_y" value="0.065"/>
+  <xacro:property name="deck_rear_x" value="-0.095"/>
+  <xacro:property name="deck_rear_y" value="0.025"/>
+
+  <!-- Rail geometry -->
+  <xacro:property name="deck_front_rail_length" value="0.130000"/>
+  <xacro:property name="deck_rear_rail_length" value="0.050000"/>
+  <xacro:property name="deck_side_rail_length" value="0.174642"/>
+
+  <xacro:property name="deck_left_mid_x" value="-0.010000"/>
+  <xacro:property name="deck_left_mid_y" value="0.045000"/>
+  <xacro:property name="deck_right_mid_x" value="-0.010000"/>
+  <xacro:property name="deck_right_mid_y" value="-0.045000"/>
+
+  <xacro:property name="deck_left_rail_yaw" value="-2.91050199"/>
+  <xacro:property name="deck_right_rail_yaw" value="2.91050199"/>
+
+  <!-- Corner cap radius hides square-ended rail intersections -->
+  <xacro:property name="deck_corner_radius" value="${deck_rail_width / 2.0}"/>
+
+  <xacro:property name="wheel_radius" value="0.065"/>
+  <xacro:property name="wheel_width"  value="0.030"/>
+  <!-- Drive wheel centreline: inner tire face touches chassis outer face -->
+  <xacro:property name="wheel_y"
+                  value="${chassis_width / 2.0 + wheel_width / 2.0}"/>
+  <xacro:property name="wheel_x"      value="0.030"/>
+
+  <xacro:property name="caster_radius" value="0.022"/>
+  <xacro:property name="caster_width"  value="0.016"/>
+  <xacro:property name="caster_x"      value="-0.115"/>
+
+  <!-- Main chassis bottom is intentionally above wheel contact plane -->
+  <xacro:property name="body_z" value="0.070"/>
+
+  <!-- - Materials - -->
+  <!-- Main color palette -->
+  <material name="chassis_metallic_green">
+    <color rgba="0.12 0.34 0.20 1.0"/>
+  </material>
+
+  <material name="deck_olive">
+    <color rgba="0.28 0.34 0.23 1.0"/>
+  </material>
+
+  <material name="panel_light_grey">
+    <color rgba="0.72 0.74 0.76 1.0"/>
+  </material>
+
+  <material name="wheel_light_brown">
+    <color rgba="0.58 0.36 0.20 1.0"/>
+  </material>
+
+  <material name="caster_silver">
+    <color rgba="0.78 0.80 0.82 1.0"/>
+  </material>
+
+  <material name="pillar_gold">
+    <color rgba="0.83 0.62 0.12 1.0"/>
+  </material>
+
+  <material name="hub_dark_grey">
+    <color rgba="0.26 0.28 0.30 1.0"/>
+  </material>
+
+  <!-- ========================================================= -->
+  <!-- Helper macros                                              -->
+  <!-- ========================================================= -->
+
+  <xacro:macro name="box_inertial" params="mass x y z">
+    <inertial>
+      <mass value="${mass}"/>
+      <origin xyz="0 0 0"/>
+      <inertia
+        ixx="${mass * (y*y + z*z) / 12.0}"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="${mass * (x*x + z*z) / 12.0}"
+        iyz="0.0"
+        izz="${mass * (x*x + y*y) / 12.0}"/>
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="cylinder_inertial" params="mass radius length">
+    <inertial>
+      <mass value="${mass}"/>
+      <origin xyz="0 0 0"/>
+      <inertia
+        ixx="${mass * (3*radius*radius + length*length) / 12.0}"
+        ixy="0.0"
+        ixz="0.0"
+        iyy="${mass * (3*radius*radius + length*length) / 12.0}"
+        iyz="0.0"
+        izz="${mass * radius*radius / 2.0}"/>
+    </inertial>
+  </xacro:macro>
+
+
+  <!-- Reusable structural standoff pillar -->
+  <xacro:macro name="standoff_pillar" params="name x y">
+    <link name="${name}_link">
+      <visual>
+        <origin xyz="0 0 0"/>
+        <geometry>
+          <cylinder radius="${pillar_radius}" length="${pillar_height}"/>
+        </geometry>
+        <material name="pillar_gold"/>
+      </visual>
+
+      <collision>
+        <origin xyz="0 0 0"/>
+        <geometry>
+          <cylinder radius="${pillar_radius}" length="${pillar_height}"/>
+        </geometry>
+      </collision>
+
+      <xacro:cylinder_inertial
+        mass="0.035"
+        radius="${pillar_radius}"
+        length="${pillar_height}"/>
+    </link>
+
+    <joint name="${name}_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="${name}_link"/>
+      <origin xyz="${x} ${y} ${body_height/2 + pillar_height/2}" rpy="0 0 0"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- ========================================================= -->
+  <!-- Base frame                                                 -->
+  <!-- ========================================================= -->
+
+  <link name="base_footprint"/>
+
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 ${body_z}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ========================================================= -->
+  <!-- Main chassis                                               -->
+  <!-- ========================================================= -->
+
+  <link name="base_link">
+
+    <!--
+      Straight middle section.
+      Its side faces are parallel to the drive wheels.
+    -->
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <box size="${chassis_straight_length} ${chassis_width} ${body_height}"/>
+      </geometry>
+      <material name="chassis_metallic_green"/>
+    </visual>
+
+    <!-- Rounded front end -->
+    <visual>
+      <origin xyz="${chassis_front_x} 0 0"/>
+      <geometry>
+        <cylinder radius="${chassis_round_radius}" length="${body_height}"/>
+      </geometry>
+      <material name="chassis_metallic_green"/>
+    </visual>
+
+    <!-- Rounded rear end -->
+    <visual>
+      <origin xyz="${chassis_rear_x} 0 0"/>
+      <geometry>
+        <cylinder radius="${chassis_round_radius}" length="${body_height}"/>
+      </geometry>
+      <material name="chassis_metallic_green"/>
+    </visual>
+
+    <!-- Collision geometry mirrors the simple capsule construction -->
+    <collision>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <box size="${chassis_straight_length} ${chassis_width} ${body_height}"/>
+      </geometry>
+    </collision>
+
+    <collision>
+      <origin xyz="${chassis_front_x} 0 0"/>
+      <geometry>
+        <cylinder radius="${chassis_round_radius}" length="${body_height}"/>
+      </geometry>
+    </collision>
+
+    <collision>
+      <origin xyz="${chassis_rear_x} 0 0"/>
+      <geometry>
+        <cylinder radius="${chassis_round_radius}" length="${body_height}"/>
+      </geometry>
+    </collision>
+
+    <!-- Conservative box approximation for chassis inertia -->
+    <xacro:box_inertial
+      mass="2.2"
+      x="${chassis_total_length}"
+      y="${chassis_width}"
+      z="${body_height}"/>
+  </link>
+
+
+  <!-- Three standoffs for reversed deck orientation -->
+  <xacro:standoff_pillar name="front_left_pillar"
+                         x="${pillar_front_x}" y="${pillar_front_y}"/>
+
+  <xacro:standoff_pillar name="front_right_pillar"
+                         x="${pillar_front_x}" y="${-pillar_front_y}"/>
+
+  <xacro:standoff_pillar name="rear_pillar"
+                         x="${pillar_rear_x}" y="${pillar_rear_y}"/>
+
+  <!-- ========================================================= -->
+  <!-- Upper wedge deck                                           -->
+  <!-- ========================================================= -->
+
+  <link name="upper_deck">
+
+    <!--
+      Primitive-only clipped triangular frame.
+      Wide front edge (+X), short flat rear edge (-X).
+      Corner cylinders cover the square rail ends and remove visible notches.
+    -->
+
+    <!-- Front wide edge -->
+    <visual>
+      <origin xyz="${deck_front_x} 0 0" rpy="0 0 ${pi/2}"/>
+      <geometry>
+        <box size="${deck_front_rail_length} ${deck_rail_width} ${upper_height}"/>
+      </geometry>
+      <material name="deck_olive"/>
+    </visual>
+
+    <!-- Rear short edge -->
+    <visual>
+      <origin xyz="${deck_rear_x} 0 0" rpy="0 0 ${pi/2}"/>
+      <geometry>
+        <box size="${deck_rear_rail_length} ${deck_rail_width} ${upper_height}"/>
+      </geometry>
+      <material name="deck_olive"/>
+    </visual>
+
+    <!-- Left sloping edge -->
+    <visual>
+      <origin xyz="${deck_left_mid_x} ${deck_left_mid_y} 0"
+              rpy="0 0 ${deck_left_rail_yaw}"/>
+      <geometry>
+        <box size="${deck_side_rail_length} ${deck_rail_width} ${upper_height}"/>
+      </geometry>
+      <material name="deck_olive"/>
+    </visual>
+
+    <!-- Right sloping edge -->
+    <visual>
+      <origin xyz="${deck_right_mid_x} ${deck_right_mid_y} 0"
+              rpy="0 0 ${deck_right_rail_yaw}"/>
+      <geometry>
+        <box size="${deck_side_rail_length} ${deck_rail_width} ${upper_height}"/>
+      </geometry>
+      <material name="deck_olive"/>
+    </visual>
+
+    <!-- Corner caps: visually clean the rail intersections -->
+
+    <visual>
+      <origin xyz="${deck_front_x} ${deck_front_y} 0"/>
+      <geometry>
+        <cylinder radius="${deck_corner_radius}" length="${upper_height}"/>
+      </geometry>
+      <material name="deck_olive"/>
+    </visual>
+
+    <visual>
+      <origin xyz="${deck_front_x} ${-deck_front_y} 0"/>
+      <geometry>
+        <cylinder radius="${deck_corner_radius}" length="${upper_height}"/>
+      </geometry>
+      <material name="deck_olive"/>
+    </visual>
+
+    <visual>
+      <origin xyz="${deck_rear_x} ${deck_rear_y} 0"/>
+      <geometry>
+        <cylinder radius="${deck_corner_radius}" length="${upper_height}"/>
+      </geometry>
+      <material name="deck_olive"/>
+    </visual>
+
+    <visual>
+      <origin xyz="${deck_rear_x} ${-deck_rear_y} 0"/>
+      <geometry>
+        <cylinder radius="${deck_corner_radius}" length="${upper_height}"/>
+      </geometry>
+      <material name="deck_olive"/>
+    </visual>
+
+    <!-- Simple collision envelope -->
+    <collision>
+      <origin xyz="-0.010 0 0"/>
+      <geometry>
+        <box size="0.180 0.145 ${upper_height}"/>
+      </geometry>
+    </collision>
+
+    <xacro:box_inertial
+      mass="0.45"
+      x="0.180"
+      y="0.145"
+      z="${upper_height}"/>
+
+  </link>
+
+  <joint name="upper_deck_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="upper_deck"/>
+
+    <!-- Geometry is already defined with apex toward the rear/caster side -->
+    <origin xyz="0 0 ${body_height/2 + pillar_height + upper_height/2}"
+            rpy="0 0 0"/>
+  </joint>
+
+  <!-- ========================================================= -->
+  <!-- Drive wheels                                               -->
+  <!-- Cylinder axis is rotated to align with robot Y-axis       -->
+  <!-- ========================================================= -->
+
+  <link name="left_wheel_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+      <geometry>
+        <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+      </geometry>
+      <material name="wheel_light_brown"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+      <geometry>
+        <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+      </geometry>
+    </collision>
+
+    <xacro:cylinder_inertial mass="0.32" radius="${wheel_radius}" length="${wheel_width}"/>
+  </link>
+
+  <joint name="left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="left_wheel_link"/>
+    <origin xyz="${wheel_x} ${wheel_y} ${-body_z + wheel_radius}" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <link name="right_wheel_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+      <geometry>
+        <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+      </geometry>
+      <material name="wheel_light_brown"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+      <geometry>
+        <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+      </geometry>
+    </collision>
+
+    <xacro:cylinder_inertial mass="0.32" radius="${wheel_radius}" length="${wheel_width}"/>
+  </link>
+
+  <joint name="right_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="right_wheel_link"/>
+    <origin xyz="${wheel_x} ${-wheel_y} ${-body_z + wheel_radius}" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <!-- ========================================================= -->
+  <!-- Rear caster assembly                                      -->
+  <!-- Fork is fixed to chassis; caster wheel rotates freely     -->
+  <!-- Wheel bottom is aligned to z = 0 ground plane             -->
+  <!-- ========================================================= -->
+
+  <link name="caster_mount_link">
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.020" length="0.016"/>
+      </geometry>
+      <material name="hub_dark_grey"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.020" length="0.016"/>
+      </geometry>
+    </collision>
+
+    <xacro:cylinder_inertial mass="0.08" radius="0.020" length="0.016"/>
+  </link>
+
+  <joint name="caster_mount_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="caster_mount_link"/>
+    <origin xyz="${caster_x} 0 ${-body_z + 0.046}" rpy="0 0 0"/>
+  </joint>
+
+  <link name="caster_fork_link">
+    <!-- Two compact fork arms -->
+    <visual>
+      <origin xyz="0.012 0.012 -0.011"/>
+      <geometry>
+        <box size="0.010 0.006 0.028"/>
+      </geometry>
+      <material name="hub_dark_grey"/>
+    </visual>
+
+    <visual>
+      <origin xyz="0.012 -0.012 -0.011"/>
+      <geometry>
+        <box size="0.010 0.006 0.028"/>
+      </geometry>
+      <material name="hub_dark_grey"/>
+    </visual>
+
+    <!-- Top crossbar connecting both arms -->
+    <visual>
+      <origin xyz="0.006 0 0.002"/>
+      <geometry>
+        <box size="0.030 0.030 0.006"/>
+      </geometry>
+      <material name="hub_dark_grey"/>
+    </visual>
+
+    <!-- Simple compact collision approximation -->
+    <collision>
+      <origin xyz="0.006 0 -0.010"/>
+      <geometry>
+        <box size="0.030 0.030 0.026"/>
+      </geometry>
+    </collision>
+
+    <xacro:box_inertial mass="0.05" x="0.030" y="0.030" z="0.026"/>
+  </link>
+
+  <joint name="caster_swivel_joint" type="continuous">
+    <parent link="caster_mount_link"/>
+    <child link="caster_fork_link"/>
+    <origin xyz="0 0 -0.008" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <dynamics damping="0.05" friction="0.02"/>
+  </joint>
+
+  <link name="caster_wheel_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+      <geometry>
+        <cylinder radius="${caster_radius}" length="${caster_width}"/>
+      </geometry>
+      <material name="caster_silver"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+      <geometry>
+        <cylinder radius="${caster_radius}" length="${caster_width}"/>
+      </geometry>
+    </collision>
+
+    <xacro:cylinder_inertial mass="0.05" radius="${caster_radius}" length="${caster_width}"/>
+  </link>
+
+  <joint name="caster_wheel_joint" type="continuous">
+    <parent link="caster_fork_link"/>
+    <child link="caster_wheel_link"/>
+    <origin xyz="0.012 0 ${-0.016}" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <dynamics damping="0.02" friction="0.01"/>
+  </joint>
+
+  <!-- ========================================================= -->
+  <!-- Gazebo physical properties                                -->
+  <!-- ========================================================= -->
+
+  <gazebo reference="base_link">
+  </gazebo>
+
+  <gazebo reference="left_wheel_link">
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+  </gazebo>
+
+  <gazebo reference="right_wheel_link">
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+  </gazebo>
+
+  <gazebo reference="caster_wheel_link">
+    <mu1>0.15</mu1>
+    <mu2>0.15</mu2>
+  </gazebo>
+
+</robot>
