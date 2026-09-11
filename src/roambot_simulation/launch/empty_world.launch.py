@@ -13,6 +13,7 @@ def generate_launch_description():
 
     world_file = simulation_share + "/worlds/empty_world.sdf"
     xacro_file = description_share + "/urdf/roambot.urdf.xacro"
+    bridge_config = simulation_share + "/config/bridge.yaml"
 
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -37,7 +38,15 @@ def generate_launch_description():
         output="screen",
     )
 
+    bridge = Node(
+        package="ros_gz_bridge",
+        executable="parameter_bridge",
+        parameters=[{"config_file": bridge_config}],
+        output="screen",
+    )
+
     return LaunchDescription([
         gazebo,
+        bridge,
         TimerAction(period=3.0, actions=[spawn_roambot]),
     ])

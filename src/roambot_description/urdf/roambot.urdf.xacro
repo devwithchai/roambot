@@ -557,4 +557,37 @@
     <mu2>0.15</mu2>
   </gazebo>
 
+    <!-- Gazebo's built-in differential-drive controller -->
+  <gazebo>
+    <plugin filename="gz-sim-diff-drive-system"
+            name="gz::sim::systems::DiffDrive">
+
+      <!-- The two joints Gazebo must rotate -->
+      <left_joint>left_wheel_joint</left_joint>
+      <right_joint>right_wheel_joint</right_joint>
+
+      <!-- RoamBot's real model dimensions -->
+      <wheel_separation>0.235</wheel_separation>
+      <wheel_radius>0.065</wheel_radius>
+
+      <!-- Gazebo topic names -->
+      <topic>/model/roambot/cmd_vel</topic>
+      <odom_topic>/model/roambot/odometry</odom_topic>
+      <tf_topic>/model/roambot/tf</tf_topic>
+
+      <!-- Names used inside odometry messages -->
+      <frame_id>odom</frame_id>
+      <child_frame_id>base_footprint</child_frame_id>
+
+      <!-- Publish 30 position updates per second -->
+      <odom_publish_frequency>30</odom_publish_frequency>
+
+      <!-- Safe beginner-level speed limits -->
+      <max_linear_velocity>0.5</max_linear_velocity>
+      <max_angular_velocity>1.5</max_angular_velocity>
+      <max_linear_acceleration>1.0</max_linear_acceleration>
+      <max_angular_acceleration>2.0</max_angular_acceleration>
+    </plugin>
+  </gazebo>
+
 </robot>
