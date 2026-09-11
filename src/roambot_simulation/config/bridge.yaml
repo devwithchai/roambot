@@ -32,3 +32,11 @@
   ros_type_name: "tf2_msgs/msg/TFMessage"
   gz_type_name: "gz.msgs.Pose_V"
   direction: GZ_TO_ROS
+
+# Gazebo LiDAR readings -> ROS laser scans
+- ros_topic_name: "/scan"
+  frame_id: "lidar_link"
+  gz_topic_name: "/model/roambot/scan"
+  ros_type_name: "sensor_msgs/msg/LaserScan"
+  gz_type_name: "gz.msgs.LaserScan"
+  direction: GZ_TO_ROS

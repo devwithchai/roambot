@@ -13,6 +13,10 @@
             name="gz::sim::systems::UserCommands"/>
     <plugin filename="gz-sim-scene-broadcaster-system"
             name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system"
+            name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
 
     <light type="directional" name="sun">
       <pose>0 0 10 0 0 0</pose>
@@ -43,6 +47,32 @@
           <material>
             <ambient>0.25 0.25 0.25 1</ambient>
             <diffuse>0.45 0.45 0.45 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="front_obstacle">
+      <static>true</static>
+      <pose>2.0 0 0.40 0 0 0</pose>
+
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.30 0.80 0.80</size>
+            </box>
+          </geometry>
+        </collision>
+
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.30 0.80 0.80</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.75 0.20 0.15 1</diffuse>
           </material>
         </visual>
       </link>

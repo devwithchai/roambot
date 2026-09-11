@@ -536,6 +536,58 @@
   </joint>
 
   <!-- ========================================================= -->
+  <!-- 2D LiDAR: distance sensor mounted above the front deck   -->
+  <!-- ========================================================= -->
+
+  <!-- Small circular mounting base resting on the upper deck -->
+  <link name="lidar_mount_link">
+    <visual>
+      <geometry>
+        <cylinder radius="0.033" length="0.006"/>
+      </geometry>
+      <material name="hub_dark_grey"/>
+    </visual>
+
+    <collision>
+      <geometry>
+        <cylinder radius="0.033" length="0.006"/>
+      </geometry>
+    </collision>
+
+    <xacro:cylinder_inertial mass="0.03" radius="0.033" length="0.006"/>
+  </link>
+
+  <joint name="lidar_mount_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="lidar_mount_link"/>
+    <origin xyz="0.075 0 0.0855" rpy="0 0 0"/>
+  </joint>
+
+  <!-- LiDAR housing raised above its mounting base -->
+  <link name="lidar_link">
+    <visual>
+      <geometry>
+        <cylinder radius="0.025" length="0.025"/>
+      </geometry>
+      <material name="hub_dark_grey"/>
+    </visual>
+
+    <collision>
+      <geometry>
+        <cylinder radius="0.025" length="0.025"/>
+      </geometry>
+    </collision>
+
+    <xacro:cylinder_inertial mass="0.06" radius="0.025" length="0.025"/>
+  </link>
+
+  <joint name="lidar_joint" type="fixed">
+    <parent link="lidar_mount_link"/>
+    <child link="lidar_link"/>
+    <origin xyz="0 0 0.0155" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ========================================================= -->
   <!-- Gazebo physical properties                                -->
   <!-- ========================================================= -->
 
@@ -555,6 +607,33 @@
   <gazebo reference="caster_wheel_link">
     <mu1>0.15</mu1>
     <mu2>0.15</mu2>
+  </gazebo>
+
+  <gazebo reference="lidar_link">
+    <sensor name="lidar_sensor" type="gpu_lidar">
+      <pose>0 0 0 0 0 0</pose>
+      <topic>/model/roambot/scan</topic>
+      <update_rate>10</update_rate>
+      <always_on>true</always_on>
+      <visualize>false</visualize>
+
+      <lidar>
+        <scan>
+          <horizontal>
+            <samples>360</samples>
+            <resolution>1</resolution>
+            <min_angle>-3.14159</min_angle>
+            <max_angle>3.14159</max_angle>
+          </horizontal>
+        </scan>
+
+        <range>
+          <min>0.12</min>
+          <max>6.0</max>
+          <resolution>0.01</resolution>
+        </range>
+      </lidar>
+    </sensor>
   </gazebo>
 
     <!-- Gazebo's built-in differential-drive controller -->
