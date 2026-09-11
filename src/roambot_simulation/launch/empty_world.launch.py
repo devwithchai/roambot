@@ -4,6 +4,7 @@ from launch.actions import IncludeLaunchDescription, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import Command
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
@@ -14,6 +15,21 @@ def generate_launch_description():
     world_file = simulation_share + "/worlds/empty_world.sdf"
     xacro_file = description_share + "/urdf/roambot.urdf.xacro"
     bridge_config = simulation_share + "/config/bridge.yaml"
+    
+    robot_description = ParameterValue(
+        Command(["xacro ", xacro_file]),
+        value_type=str,
+    )
+
+    robot_state_publisher = Node(
+        package="robot_state_publisher",
+        executable="robot_state_publisher",
+        parameters=[{
+            "use_sim_time": True,
+            "robot_description": robot_description,
+        }],
+        output="screen",
+    )
 
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -48,5 +64,6 @@ def generate_launch_description():
     return LaunchDescription([
         gazebo,
         bridge,
+        robot_state_publisher,
         TimerAction(period=3.0, actions=[spawn_roambot]),
     ])
