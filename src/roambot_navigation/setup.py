@@ -1,4 +1,5 @@
 from setuptools import find_packages, setup
+from glob import glob
 
 package_name = 'roambot_navigation'
 
@@ -10,11 +11,14 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        ('share/' + package_name + '/config', glob('config/*.yaml')),
+        ('share/' + package_name + '/launch', glob('launch/*.launch.py')),
+        ('share/' + package_name + '/maps', glob('maps/*')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='ros',
-    maintainer_email='chaitanyabelekar59@gmail.com',
+    maintainer_email='chaitanyabelekar59@gsmail.com',
     description='TODO: Package description',
     license='TODO: License declaration',
     extras_require={
