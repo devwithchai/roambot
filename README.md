@@ -4,6 +4,8 @@ RoamBot is a lightweight 2-wheel differential-drive mobile robot simulation buil
 
 It is designed as a complete autonomous-navigation project: a custom robot model drives in a simulated arena, senses walls using 2D LiDAR, builds a map with SLAM, and navigates to goals using Nav2.
 
+<img width="800" height="449" alt="roambot-nav2-demo" src="https://github.com/user-attachments/assets/484acb33-f66a-413a-a8bd-2c76ee65aa48" />
+
 ## Features
 
 - Custom RoamBot Xacro/URDF robot model
