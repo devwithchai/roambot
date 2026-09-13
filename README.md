@@ -18,6 +18,7 @@ It is designed as a complete autonomous-navigation project: a custom robot model
 - AMCL localization on the saved map
 - Autonomous goal navigation using Nav2
 - ROS–Gazebo communication through `ros_gz_bridge`
+- One-command Gazebo, Nav2, and RViz bringup
 
 ## Project structure
 
@@ -27,7 +28,7 @@ roambot_ws/
 │   ├── roambot_description/   # Robot body, wheels, caster, and LiDAR model
 │   ├── roambot_simulation/    # Gazebo worlds, spawning, drive system, bridges
 │   ├── roambot_navigation/    # SLAM, saved map, AMCL, and Nav2 configuration
-│   └── roambot_bringup/       # Future unified launch package
+│   └── roambot_bringup/       # One-command Gazebo, Nav2, and RViz launcher
 ├── README.md
 └── .gitignore
 ```
@@ -70,7 +71,25 @@ colcon build --symlink-install
 source install/setup.bash
 ```
 
-## Run the simulation
+## Quick start: autonomous navigation
+
+After building the workspace, start the complete RoamBot navigation system with one command:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+cd ~/roambot_ws
+source install/setup.bash
+
+ros2 launch roambot_bringup bringup.launch.py
+```
+
+This starts Gazebo Harmonic, spawns RoamBot in the arena, bridges simulation data to ROS 2, starts Nav2 localization and planning, and opens RViz.
+
+In RViz, select **Nav2 Goal**, then click and drag on a free area of the map. RoamBot will plan and follow a collision-free path to that goal.
+
+> The unified launch uses the already saved `roambot_arena` map. Use SLAM separately only when creating or updating a map.
+
+## Individual launch modes
 
 ### 1. Launch RoamBot in the arena
 
@@ -146,21 +165,8 @@ RoamBot uses:
 - **Regulated Pure Pursuit** as the local controller for smoother turning in the compact arena.
 - A `0.18 m` robot safety radius and inflated obstacle boundaries to avoid wall collisions.
 
-## Verification completed
-
-- [X] Robot model visible in RViz
-- [X] RoamBot spawned in Gazebo Harmonic
-- [X] Manual differential-drive control
-- [X] `/odom`, `/tf`, and `/joint_states` verified
-- [X] 2D LiDAR `/scan` verified in RViz
-- [X] Arena map created and saved
-- [X] AMCL localization verified
-- [X] Nav2 autonomous goal navigation verified
-
 ## Future work
 
-- Add a single unified bringup launch file
-- Improve controller tuning using repeated route tests
-- Add physical odometry calibration experiments
+- Add a unified SLAM-mapping bringup mode
+- Perform repeated physical odometry-calibration experiments
 - Add a real-hardware version of RoamBot
-- Add an RViz configuration and demo video
