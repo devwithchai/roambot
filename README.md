@@ -164,9 +164,3 @@ RoamBot uses:
 - **Nav2** for planning and goal navigation.
 - **Regulated Pure Pursuit** as the local controller for smoother turning in the compact arena.
 - A `0.18 m` robot safety radius and inflated obstacle boundaries to avoid wall collisions.
-
-## Future work
-
-- Add a unified SLAM-mapping bringup mode
-- Perform repeated physical odometry-calibration experiments
-- Add a real-hardware version of RoamBot
