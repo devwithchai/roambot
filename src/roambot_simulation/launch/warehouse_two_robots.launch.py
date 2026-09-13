@@ -2,9 +2,10 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, TimerAction
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import Command
+from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
@@ -61,6 +62,16 @@ def generate_launch_description():
         value_type=str,
     )
 
+    spawn_service_argument = DeclareLaunchArgument(
+        "spawn_service",
+        default_value="true",
+        description="Spawn the Service robot as well as the Scout robot",
+    )
+
+    service_condition = IfCondition(
+        LaunchConfiguration("spawn_service")
+    )
+
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(ros_gz_sim_share, "launch", "gz_sim.launch.py")
@@ -75,6 +86,7 @@ def generate_launch_description():
         package="robot_state_publisher",
         executable="robot_state_publisher",
         namespace="scout",
+        remappings=[("/tf","/scout/tf"), ("/tf_static", "/scout/tf_static")],
         parameters=[{
             "use_sim_time": True,
             "frame_prefix": "scout/",
@@ -87,6 +99,8 @@ def generate_launch_description():
         package="robot_state_publisher",
         executable="robot_state_publisher",
         namespace="service",
+        remappings=[("/tf", "/service/tf"), ("/tf_static", "/service/tf_static")],
+        condition=service_condition,
         parameters=[{
             "use_sim_time": True,
             "frame_prefix": "service/",
@@ -105,6 +119,7 @@ def generate_launch_description():
     service_bridge = Node(
         package="ros_gz_bridge",
         executable="parameter_bridge",
+        condition=service_condition,
         parameters=[{"config_file": service_bridge_config}],
         output="screen",
     )
@@ -129,6 +144,7 @@ def generate_launch_description():
     spawn_service = Node(
         package="ros_gz_sim",
         executable="create",
+        condition=service_condition,
         arguments=[
             "-world", "warehouse",
             "-name", "service",
@@ -142,6 +158,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        spawn_service_argument,
         gazebo,
         scout_bridge,
         service_bridge,

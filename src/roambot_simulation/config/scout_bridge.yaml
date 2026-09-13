@@ -24,7 +24,7 @@
   gz_type_name: "gz.msgs.Model"
   direction: GZ_TO_ROS
 
-- ros_topic_name: "/tf"
+- ros_topic_name: "/scout/tf"
   gz_topic_name: "/model/scout/tf"
   ros_type_name: "tf2_msgs/msg/TFMessage"
   gz_type_name: "gz.msgs.Pose_V"
