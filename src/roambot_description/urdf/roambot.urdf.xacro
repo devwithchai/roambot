@@ -1,5 +1,11 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="roambot">
+  <!-- Values used when multiple RoamBots are spawned in one world. -->
+  <xacro:arg name="model_name" default="roambot"/>
+  <xacro:arg name="frame_prefix" default=""/>
+
+  <xacro:property name="model_name" value="$(arg model_name)"/>
+  <xacro:property name="frame_prefix" value="$(arg frame_prefix)"/>
 
   <!-- ========================================================= -->
   <!-- TRI-ROVER: Concept 2WD differential-drive mobile robot    -->
@@ -612,7 +618,7 @@
   <gazebo reference="lidar_link">
     <sensor name="lidar_sensor" type="gpu_lidar">
       <pose>0 0 0 0 0 0</pose>
-      <topic>/model/roambot/scan</topic>
+      <topic>/model/${model_name}/scan</topic>
       <update_rate>10</update_rate>
       <always_on>true</always_on>
       <visualize>false</visualize>
@@ -650,13 +656,13 @@
       <wheel_radius>0.065</wheel_radius>
 
       <!-- Gazebo topic names -->
-      <topic>/model/roambot/cmd_vel</topic>
-      <odom_topic>/model/roambot/odometry</odom_topic>
-      <tf_topic>/model/roambot/tf</tf_topic>
+      <topic>/model/${model_name}/cmd_vel</topic>
+      <odom_topic>/model/${model_name}/odometry</odom_topic>
+      <tf_topic>/model/${model_name}/tf</tf_topic>
 
       <!-- Names used inside odometry messages -->
-      <frame_id>odom</frame_id>
-      <child_frame_id>base_footprint</child_frame_id>
+      <frame_id>${frame_prefix}odom</frame_id>
+      <child_frame_id>${frame_prefix}base_footprint</child_frame_id>
 
       <!-- Publish 30 position updates per second -->
       <odom_publish_frequency>30</odom_publish_frequency>
@@ -671,7 +677,7 @@
     <!-- Publish simulated joint positions for ROS / RViz -->
     <plugin filename="gz-sim-joint-state-publisher-system"
             name="gz::sim::systems::JointStatePublisher">
-      <topic>/model/roambot/joint_states</topic>
+      <topic>/model/${model_name}/joint_states</topic>
 
       <joint_name>left_wheel_joint</joint_name>
       <joint_name>right_wheel_joint</joint_name>
