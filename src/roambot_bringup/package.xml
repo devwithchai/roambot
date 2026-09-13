@@ -1,11 +1,22 @@
 <?xml version="1.0"?>
-<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd"
+  schematypens="http://www.w3.org/2001/XMLSchema"?>
+
 <package format="3">
   <name>roambot_bringup</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Unified simulation and navigation launch package for RoamBot.</description>
+
   <maintainer email="chaitanyabelekar59@gmail.com">ros</maintainer>
-  <license>TODO: License declaration</license>
+  <license>Apache-2.0</license>
+
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>nav2_bringup</exec_depend>
+  <exec_depend>roambot_navigation</exec_depend>
+  <exec_depend>roambot_simulation</exec_depend>
+  <exec_depend>rviz2</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
