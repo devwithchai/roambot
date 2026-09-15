@@ -479,5 +479,91 @@
       </link>
     </model>
 
+    <!-- Visual inventory labels: no collision, so navigation remains unchanged -->
+
+    <model name="inventory_tag_10">
+      <static>true</static>
+      <pose>-3.090 -1.550 0.520 0 0 0</pose>
+      <link name="link">
+        <visual name="marker">
+          <pose>0 0 0 0 1.57079632679 0</pose>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>0.260 0.260</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>1 1 1 1</ambient>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>0 0 0 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>model://inventory_tag_10/materials/textures/inventory_tag_10.png</albedo_map>
+                <roughness>0.9</roughness>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="inventory_tag_11">
+      <static>true</static>
+      <pose>-3.090 0 0.520 0 0 0</pose>
+      <link name="link">
+        <visual name="marker">
+          <pose>0 0 0 0 1.57079632679 0</pose>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>0.260 0.260</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>1 1 1 1</ambient>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>0 0 0 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>model://inventory_tag_11/materials/textures/inventory_tag_11.png</albedo_map>
+                <roughness>0.9</roughness>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="inventory_tag_12">
+      <static>true</static>
+      <pose>-3.090 1.550 0.520 0 0 0</pose>
+      <link name="link">
+        <visual name="marker">
+          <pose>0 0 0 0 1.57079632679 0</pose>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>0.260 0.260</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>1 1 1 1</ambient>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>0 0 0 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>model://inventory_tag_12/materials/textures/inventory_tag_12.png</albedo_map>
+                <roughness>0.9</roughness>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+      </link>
+    </model>
+
   </world>
 </sdf>

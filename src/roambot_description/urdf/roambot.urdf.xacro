@@ -3,15 +3,15 @@
   <!-- Values used when multiple RoamBots are spawned in one world. -->
   <xacro:arg name="model_name" default="roambot"/>
   <xacro:arg name="frame_prefix" default=""/>
+  <xacro:property name="enable_camera" value="$(arg enable_camera)"/>
 
   <xacro:property name="model_name" value="$(arg model_name)"/>
   <xacro:property name="frame_prefix" value="$(arg frame_prefix)"/>
+  <xacro:property name="enable_camera" value="$(arg enable_camera)"/>
 
-  <!-- ========================================================= -->
   <!-- TRI-ROVER: Concept 2WD differential-drive mobile robot    -->
   <!-- Simplified physical model designed for ROS 2 / Gazebo     -->
   <!-- Units: SI (meters, kilograms, radians)                     -->
-  <!-- ========================================================= -->
 
   <!-- - Parameters - -->
   <xacro:property name="body_length" value="0.30"/>
@@ -118,9 +118,11 @@
     <color rgba="0.26 0.28 0.30 1.0"/>
   </material>
 
-  <!-- ========================================================= -->
-  <!-- Helper macros                                              -->
-  <!-- ========================================================= -->
+  <material name="camera_lens_silver">
+    <color rgba="0.78 0.80 0.82 1.0"/>
+  </material>
+
+  <!-- Helper macros-->
 
   <xacro:macro name="box_inertial" params="mass x y z">
     <inertial>
@@ -182,9 +184,7 @@
     </joint>
   </xacro:macro>
 
-  <!-- ========================================================= -->
-  <!-- Base frame                                                 -->
-  <!-- ========================================================= -->
+  <!-- Base frame-->
 
   <link name="base_footprint"/>
 
@@ -194,9 +194,7 @@
     <origin xyz="0 0 ${body_z}" rpy="0 0 0"/>
   </joint>
 
-  <!-- ========================================================= -->
-  <!-- Main chassis                                               -->
-  <!-- ========================================================= -->
+  <!-- Main chassis-->
 
   <link name="base_link">
 
@@ -271,9 +269,7 @@
   <xacro:standoff_pillar name="rear_pillar"
                          x="${pillar_rear_x}" y="${pillar_rear_y}"/>
 
-  <!-- ========================================================= -->
   <!-- Upper wedge deck                                           -->
-  <!-- ========================================================= -->
 
   <link name="upper_deck">
 
@@ -380,10 +376,8 @@
             rpy="0 0 0"/>
   </joint>
 
-  <!-- ========================================================= -->
-  <!-- Drive wheels                                               -->
+  <!-- Drive wheels-->
   <!-- Cylinder axis is rotated to align with robot Y-axis       -->
-  <!-- ========================================================= -->
 
   <link name="left_wheel_link">
     <visual>
@@ -437,11 +431,9 @@
     <axis xyz="0 1 0"/>
   </joint>
 
-  <!-- ========================================================= -->
   <!-- Rear caster assembly                                      -->
   <!-- Fork is fixed to chassis; caster wheel rotates freely     -->
   <!-- Wheel bottom is aligned to z = 0 ground plane             -->
-  <!-- ========================================================= -->
 
   <link name="caster_mount_link">
     <visual>
@@ -541,9 +533,7 @@
     <dynamics damping="0.02" friction="0.01"/>
   </joint>
 
-  <!-- ========================================================= -->
   <!-- 2D LiDAR: distance sensor mounted above the front deck   -->
-  <!-- ========================================================= -->
 
   <!-- Small circular mounting base resting on the upper deck -->
   <link name="lidar_mount_link">
@@ -593,9 +583,38 @@
     <origin xyz="0 0 0.0155" rpy="0 0 0"/>
   </joint>
 
-  <!-- ========================================================= -->
+  <!-- Optional front camera for visual inventory inspection      -->
+
+  <xacro:if value="${enable_camera}">
+    <link name="camera_link">
+      <visual>
+        <geometry>
+          <box size="0.040 0.050 0.030"/>
+        </geometry>
+        <material name="hub_dark_grey"/>
+      </visual>
+
+      <!-- Lens faces RoamBot's forward (+X) direction -->
+      <visual>
+        <origin xyz="0.021 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry>
+          <cylinder radius="0.011" length="0.010"/>
+        </geometry>
+        <material name="camera_lens_silver"/>
+      </visual>
+
+      <xacro:box_inertial mass="0.04" x="0.040" y="0.050" z="0.030"/>
+    </link>
+
+    <joint name="camera_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="camera_link"/>
+      <!-- +X is RoamBot's forward direction -->
+      <origin xyz="0.130 0 0.0375" rpy="0 0 0"/>
+    </joint>
+  </xacro:if>
+
   <!-- Gazebo physical properties                                -->
-  <!-- ========================================================= -->
 
   <gazebo reference="base_link">
   </gazebo>
@@ -641,6 +660,32 @@
       </lidar>
     </sensor>
   </gazebo>
+
+  <xacro:if value="${enable_camera}">
+    <gazebo reference="camera_link">
+      <sensor name="inventory_camera" type="camera">
+        <pose>0 0 0 0 0 0</pose>
+        <topic>/model/${model_name}/camera/image</topic>
+        <update_rate>10</update_rate>
+        <always_on>true</always_on>
+        <visualize>false</visualize>
+
+        <camera>
+          <horizontal_fov>1.047</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.05</near>
+            <far>5.0</far>
+          </clip>
+          <camera_info_topic>/model/${model_name}/camera/camera_info</camera_info_topic>
+        </camera>
+      </sensor>
+    </gazebo>
+  </xacro:if>
 
     <!-- Gazebo's built-in differential-drive controller -->
   <gazebo>

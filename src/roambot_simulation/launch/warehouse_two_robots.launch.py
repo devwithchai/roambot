@@ -2,15 +2,15 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction, SetEnvironmentVariable
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import Command, LaunchConfiguration
+from launch.substitutions import Command, LaunchConfiguration, EnvironmentVariable
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
 
-def robot_xacro(xacro_file, model_name):
+def robot_xacro(xacro_file, model_name, enable_camera):
     """Create a model-specific Xacro command."""
     return Command([
         "xacro ",
@@ -20,6 +20,8 @@ def robot_xacro(xacro_file, model_name):
         " frame_prefix:=",
         model_name,
         "/",
+        " enable_camera:=",
+        enable_camera,
     ])
 
 
@@ -39,6 +41,20 @@ def generate_launch_description():
         "roambot.urdf.xacro",
     )
 
+    models_path = os.path.join(simulation_share, "models")
+
+    gazebo_resource_path = SetEnvironmentVariable(
+        name="GZ_SIM_RESOURCE_PATH",
+        value=[
+            models_path,
+            os.pathsep,
+            EnvironmentVariable(
+                "GZ_SIM_RESOURCE_PATH",
+                default_value="",
+            ),
+        ],
+    )
+
     scout_bridge_config = os.path.join(
         simulation_share,
         "config",
@@ -50,8 +66,8 @@ def generate_launch_description():
         "service_bridge.yaml",
     )
 
-    scout_xacro = robot_xacro(xacro_file, "scout")
-    service_xacro = robot_xacro(xacro_file, "service")
+    scout_xacro = robot_xacro(xacro_file, "scout", "true")
+    service_xacro = robot_xacro(xacro_file, "service", "false")
 
     scout_description = ParameterValue(
         scout_xacro,
@@ -159,6 +175,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         spawn_service_argument,
+        gazebo_resource_path,
         gazebo,
         scout_bridge,
         service_bridge,
