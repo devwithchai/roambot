@@ -82,14 +82,12 @@ class InventoryTagDetector(Node):
         detected_tags.sort()
         detection_text = "; ".join(detected_tags) if detected_tags else "none"
 
-        if detection_text != self.last_detection:
-            message = String()
-            message.data = detection_text
-            self.detections_pub.publish(message)
+        message = String()
+        message.data = detection_text
+        self.detections_pub.publish(message)
 
-            self.get_logger().info(
-                f"Inventory tags detected: {detection_text}"
-            )
+        if detection_text != self.last_detection:
+            self.get_logger().info(f"Inventory tags detected: {detection_text}")
             self.last_detection = detection_text
 
         annotated_msg = self.bridge.cv2_to_imgmsg(

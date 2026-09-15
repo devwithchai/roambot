@@ -483,7 +483,7 @@
 
     <model name="inventory_tag_10">
       <static>true</static>
-      <pose>-3.090 -1.550 0.520 0 0 0</pose>
+      <pose>-3.09 -1.55 0.13 0 0 0</pose>
       <link name="link">
         <visual name="marker">
           <pose>0 0 0 0 1.57079632679 0</pose>
@@ -511,7 +511,7 @@
 
     <model name="inventory_tag_11">
       <static>true</static>
-      <pose>-3.090 0 0.520 0 0 0</pose>
+      <pose>-3.09 0 0.13 0 0 0</pose>
       <link name="link">
         <visual name="marker">
           <pose>0 0 0 0 1.57079632679 0</pose>
@@ -539,7 +539,7 @@
 
     <model name="inventory_tag_12">
       <static>true</static>
-      <pose>-3.090 1.550 0.520 0 0 0</pose>
+      <pose>-3.09 1.55 0.13 0 0 0</pose>
       <link name="link">
         <visual name="marker">
           <pose>0 0 0 0 1.57079632679 0</pose>
