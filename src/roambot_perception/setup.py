@@ -28,6 +28,8 @@ setup(
             "roambot_perception.inventory_tag_detector:main",
             "inventory_scan_mission = "
             "roambot_perception.inventory_scan_mission:main",
+            "service_dispatch_mission = "
+            "roambot_perception.service_dispatch_mission:main",
         ],
     },
 )

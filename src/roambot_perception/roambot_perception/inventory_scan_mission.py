@@ -3,12 +3,9 @@ import time
 import math
 import rclpy
 from geometry_msgs.msg import PoseStamped
-from nav2_simple_commander.robot_navigator import (
-    BasicNavigator,
-    TaskResult,
-)
+from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from std_msgs.msg import String
-
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
 
 INSPECTION_POSES = [
     {"name": "shelf_1", "expected_id": 10, "x": 3.833, "y": -0.028, "yaw": -0.040},
@@ -18,17 +15,21 @@ INSPECTION_POSES = [
 
 class InventoryScanMission(BasicNavigator):
     def __init__(self):
-        super().__init__(
-            node_name="inventory_scan_mission",
-            namespace="scout",
-        )
+        super().__init__(node_name="inventory_scan_mission", namespace="scout")
 
         self.visible_ids = set()
         self.observed_ids = set()
+
+        report_qos = QoSProfile(
+            depth=1,
+            history=HistoryPolicy.KEEP_LAST,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+        )
+
         self.report_pub = self.create_publisher(
             String,
             "inventory/scan_report",
-            10,
+            report_qos,
         )
         self.create_subscription(
             String,
