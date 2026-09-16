@@ -30,6 +30,8 @@ setup(
             "roambot_perception.inventory_scan_mission:main",
             "service_dispatch_mission = "
             "roambot_perception.service_dispatch_mission:main",
+            "warehouse_task_coordinator = "
+            "roambot_perception.warehouse_task_coordinator:main",
         ],
     },
 )
