@@ -18,6 +18,7 @@ class WarehouseTaskCoordinator(Node):
 
         self.confirmed_inventory = {}
         self.active_task = None
+        self.retry_timer = None
 
         self.dispatch_pub = self.create_publisher(
             String,
@@ -73,6 +74,11 @@ class WarehouseTaskCoordinator(Node):
             f"{self.confirmed_inventory or 'none'}"
         )
 
+    def send_dispatch(self, shelf_name):
+        dispatch_request = String()
+        dispatch_request.data = shelf_name
+        self.dispatch_pub.publish(dispatch_request)
+
     def request_callback(self, message):
         match = re.fullmatch(
             r"(?:id\s*=\s*)?(\d+)",
@@ -104,16 +110,32 @@ class WarehouseTaskCoordinator(Node):
         self.active_task = {
             "id": requested_id,
             "shelf": shelf_name,
+            "attempts": 0,
         }
 
-        dispatch_request = String()
-        dispatch_request.data = shelf_name
-        self.dispatch_pub.publish(dispatch_request)
+        self.send_dispatch(shelf_name)
 
         self.publish_status(
             f"Task accepted: id={requested_id}, "
             f"dispatching Service to {shelf_name}."
         )
+
+    def retry_dispatch(self):
+        if self.retry_timer is not None:
+            self.retry_timer.cancel()
+            self.retry_timer = None
+
+        if self.active_task is None:
+            return
+
+        shelf_name = self.active_task["shelf"]
+        requested_id = self.active_task["id"]
+
+        self.publish_status(
+            f"Retrying Service dispatch to {shelf_name} "
+            f"for inventory id={requested_id}."
+        )
+        self.send_dispatch(shelf_name)
 
     def service_status_callback(self, message):
         if self.active_task is None:
@@ -128,13 +150,29 @@ class WarehouseTaskCoordinator(Node):
                 f"for inventory id={requested_id}."
             )
             self.active_task = None
+            return
 
-        elif f"Service could not reach {shelf_name}" in message.data:
+        if f"Service could not reach {shelf_name}" not in message.data:
+            return
+
+        if self.active_task["attempts"] == 0:
+            self.active_task["attempts"] = 1
+
             self.publish_status(
-                f"Task failed: Service could not reach {shelf_name} "
-                f"for inventory id={requested_id}."
+                f"First attempt failed for inventory id={requested_id}. "
+                "Retrying once in 2 seconds."
             )
-            self.active_task = None
+            self.retry_timer = self.create_timer(
+                2.0,
+                self.retry_dispatch,
+            )
+            return
+
+        self.publish_status(
+            f"Task failed after one retry: Service could not reach "
+            f"{shelf_name} for inventory id={requested_id}."
+        )
+        self.active_task = None
 
 
 def main():
