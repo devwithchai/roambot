@@ -1,0 +1,569 @@
+<?xml version="1.0" ?>
+<sdf version="1.9">
+  <world name="warehouse">
+
+    <physics name="default_physics" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <plugin filename="gz-sim-physics-system"
+            name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system"
+            name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system"
+            name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system"
+            name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+
+    <light type="directional" name="sun">
+      <pose>0 0 10 0 0 0</pose>
+      <cast_shadows>true</cast_shadows>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <!-- Shared floor: total warehouse size is 10 m by 6 m. -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>20 20</size>
+            </plane>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>20 20</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.22 0.22 0.24 1</ambient>
+            <diffuse>0.38 0.38 0.42 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Outer warehouse walls -->
+    <model name="north_wall">
+      <static>true</static>
+      <pose>0 3 0.4 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>10.12 0.12 0.80</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>10.12 0.12 0.80</size></box></geometry><material><diffuse>0.78 0.78 0.80 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <model name="south_wall">
+      <static>true</static>
+      <pose>0 -3 0.4 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>10.12 0.12 0.80</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>10.12 0.12 0.80</size></box></geometry><material><diffuse>0.78 0.78 0.80 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <model name="east_wall">
+      <static>true</static>
+      <pose>5 0 0.4 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.12 6.12 0.80</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.12 6.12 0.80</size></box></geometry><material><diffuse>0.78 0.78 0.80 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <model name="west_wall">
+      <static>true</static>
+      <pose>-5 0 0.4 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.12 6.12 0.80</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.12 6.12 0.80</size></box></geometry><material><diffuse>0.78 0.78 0.80 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <!-- Middle divider.
+         The two gaps are doorways:
+         lower doorway = inventory entry, upper doorway = inventory exit. -->
+    <model name="divider_south">
+      <static>true</static>
+      <pose>0 -2.25 0.4 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.12 1.50 0.80</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.12 1.50 0.80</size></box></geometry><material><diffuse>0.25 0.48 0.68 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <model name="divider_centre">
+      <static>true</static>
+      <pose>0 0 0.4 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.12 1.80 0.80</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.12 1.80 0.80</size></box></geometry><material><diffuse>0.25 0.48 0.68 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <model name="divider_north">
+      <static>true</static>
+      <pose>0 2.25 0.4 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.12 1.50 0.80</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.12 1.50 0.80</size></box></geometry><material><diffuse>0.25 0.48 0.68 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <!-- Inventory room shelves.
+         The shelf names will later map to visual object-tag locations. -->
+    <model name="shelf_1">
+      <static>true</static>
+      <pose>-3.35 -1.55 0.40 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.50 1.00 0.80</size></box></geometry></collision>
+        <!-- Dark metal side supports -->
+        <visual name="left_side_frame">
+          <pose>0 0.50 0 0 0 0</pose>
+          <geometry><box><size>0.42 0.05 0.82</size></box></geometry>
+          <material><diffuse>0.16 0.18 0.20 1</diffuse></material>
+        </visual>
+
+        <visual name="right_side_frame">
+          <pose>0 -0.50 0 0 0 0</pose>
+          <geometry><box><size>0.42 0.05 0.82</size></box></geometry>
+          <material><diffuse>0.16 0.18 0.20 1</diffuse></material>
+        </visual>
+
+        <!-- Three storage boards -->
+        <visual name="bottom_board">
+          <pose>0 0 -0.33 0 0 0</pose>
+          <geometry><box><size>0.42 1.00 0.04</size></box></geometry>
+          <material><diffuse>0.48 0.30 0.12 1</diffuse></material>
+        </visual>
+
+        <visual name="middle_board">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry><box><size>0.42 1.00 0.04</size></box></geometry>
+          <material><diffuse>0.48 0.30 0.12 1</diffuse></material>
+        </visual>
+
+        <visual name="top_board">
+          <pose>0 0 0.33 0 0 0</pose>
+          <geometry><box><size>0.42 1.00 0.04</size></box></geometry>
+          <material><diffuse>0.48 0.30 0.12 1</diffuse></material>
+        </visual>
+
+        <!-- Rear support panel -->
+        <visual name="back_panel">
+          <pose>-0.19 0 0 0 0 0</pose>
+          <geometry><box><size>0.04 1.00 0.76</size></box></geometry>
+          <material><diffuse>0.22 0.25 0.28 1</diffuse></material>
+        </visual>
+
+        <!-- Visible inventory boxes; tags will be added later. -->
+        <visual name="item_box_red">
+          <pose>0.08 -0.25 0.13 0 0 0</pose>
+          <geometry><box><size>0.16 0.16 0.20</size></box></geometry>
+          <material><diffuse>0.80 0.20 0.16 1</diffuse></material>
+        </visual>
+
+        <visual name="item_box_blue">
+          <pose>0.08 0 0.13 0 0 0</pose>
+          <geometry><box><size>0.16 0.16 0.20</size></box></geometry>
+          <material><diffuse>0.18 0.42 0.82 1</diffuse></material>
+        </visual>
+
+        <visual name="item_box_green">
+          <pose>0.08 0.25 0.13 0 0 0</pose>
+          <geometry><box><size>0.16 0.16 0.20</size></box></geometry>
+          <material><diffuse>0.20 0.66 0.32 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="shelf_2">
+      <static>true</static>
+      <pose>-3.35 0 0.40 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.50 1.00 0.80</size></box></geometry></collision>
+        <!-- Dark metal side supports -->
+        <visual name="left_side_frame">
+          <pose>0 0.50 0 0 0 0</pose>
+          <geometry><box><size>0.42 0.05 0.82</size></box></geometry>
+          <material><diffuse>0.16 0.18 0.20 1</diffuse></material>
+        </visual>
+
+        <visual name="right_side_frame">
+          <pose>0 -0.50 0 0 0 0</pose>
+          <geometry><box><size>0.42 0.05 0.82</size></box></geometry>
+          <material><diffuse>0.16 0.18 0.20 1</diffuse></material>
+        </visual>
+
+        <!-- Three storage boards -->
+        <visual name="bottom_board">
+          <pose>0 0 -0.33 0 0 0</pose>
+          <geometry><box><size>0.42 1.00 0.04</size></box></geometry>
+          <material><diffuse>0.48 0.30 0.12 1</diffuse></material>
+        </visual>
+
+        <visual name="middle_board">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry><box><size>0.42 1.00 0.04</size></box></geometry>
+          <material><diffuse>0.48 0.30 0.12 1</diffuse></material>
+        </visual>
+
+        <visual name="top_board">
+          <pose>0 0 0.33 0 0 0</pose>
+          <geometry><box><size>0.42 1.00 0.04</size></box></geometry>
+          <material><diffuse>0.48 0.30 0.12 1</diffuse></material>
+        </visual>
+
+        <!-- Rear support panel -->
+        <visual name="back_panel">
+          <pose>-0.19 0 0 0 0 0</pose>
+          <geometry><box><size>0.04 1.00 0.76</size></box></geometry>
+          <material><diffuse>0.22 0.25 0.28 1</diffuse></material>
+        </visual>
+
+        <!-- Visible inventory boxes; tags will be added later. -->
+        <visual name="item_box_red">
+          <pose>0.08 -0.25 0.13 0 0 0</pose>
+          <geometry><box><size>0.16 0.16 0.20</size></box></geometry>
+          <material><diffuse>0.80 0.20 0.16 1</diffuse></material>
+        </visual>
+
+        <visual name="item_box_blue">
+          <pose>0.08 0 0.13 0 0 0</pose>
+          <geometry><box><size>0.16 0.16 0.20</size></box></geometry>
+          <material><diffuse>0.18 0.42 0.82 1</diffuse></material>
+        </visual>
+
+        <visual name="item_box_green">
+          <pose>0.08 0.25 0.13 0 0 0</pose>
+          <geometry><box><size>0.16 0.16 0.20</size></box></geometry>
+          <material><diffuse>0.20 0.66 0.32 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="shelf_3">
+      <static>true</static>
+      <pose>-3.35 1.55 0.40 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.50 1.00 0.80</size></box></geometry></collision>
+        <!-- Dark metal side supports -->
+        <visual name="left_side_frame">
+          <pose>0 0.50 0 0 0 0</pose>
+          <geometry><box><size>0.42 0.05 0.82</size></box></geometry>
+          <material><diffuse>0.16 0.18 0.20 1</diffuse></material>
+        </visual>
+
+        <visual name="right_side_frame">
+          <pose>0 -0.50 0 0 0 0</pose>
+          <geometry><box><size>0.42 0.05 0.82</size></box></geometry>
+          <material><diffuse>0.16 0.18 0.20 1</diffuse></material>
+        </visual>
+
+        <!-- Three storage boards -->
+        <visual name="bottom_board">
+          <pose>0 0 -0.33 0 0 0</pose>
+          <geometry><box><size>0.42 1.00 0.04</size></box></geometry>
+          <material><diffuse>0.48 0.30 0.12 1</diffuse></material>
+        </visual>
+
+        <visual name="middle_board">
+          <pose>0 0 0 0 0 0</pose>
+          <geometry><box><size>0.42 1.00 0.04</size></box></geometry>
+          <material><diffuse>0.48 0.30 0.12 1</diffuse></material>
+        </visual>
+
+        <visual name="top_board">
+          <pose>0 0 0.33 0 0 0</pose>
+          <geometry><box><size>0.42 1.00 0.04</size></box></geometry>
+          <material><diffuse>0.48 0.30 0.12 1</diffuse></material>
+        </visual>
+
+        <!-- Rear support panel -->
+        <visual name="back_panel">
+          <pose>-0.19 0 0 0 0 0</pose>
+          <geometry><box><size>0.04 1.00 0.76</size></box></geometry>
+          <material><diffuse>0.22 0.25 0.28 1</diffuse></material>
+        </visual>
+
+        <!-- Visible inventory boxes; tags will be added later. -->
+        <visual name="item_box_red">
+          <pose>0.08 -0.25 0.13 0 0 0</pose>
+          <geometry><box><size>0.16 0.16 0.20</size></box></geometry>
+          <material><diffuse>0.80 0.20 0.16 1</diffuse></material>
+        </visual>
+
+        <visual name="item_box_blue">
+          <pose>0.08 0 0.13 0 0 0</pose>
+          <geometry><box><size>0.16 0.16 0.20</size></box></geometry>
+          <material><diffuse>0.18 0.42 0.82 1</diffuse></material>
+        </visual>
+
+        <visual name="item_box_green">
+          <pose>0.08 0.25 0.13 0 0 0</pose>
+          <geometry><box><size>0.16 0.16 0.20</size></box></geometry>
+          <material><diffuse>0.20 0.66 0.32 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Service room reporting desk -->
+    <model name="service_desk">
+      <static>true</static>
+      <pose>3.35 0 0.30 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.75 1.20 0.60</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.75 1.20 0.60</size></box></geometry><material><diffuse>0.20 0.58 0.34 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <!-- Floor-only visual start markers; they do not block the robots. -->
+    <model name="scout_start_zone">
+      <static>true</static>
+      <pose>1.20 -1.65 0.01 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry><box><size>0.70 0.70 0.02</size></box></geometry>
+          <material><diffuse>0.95 0.72 0.12 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="service_robot_start_zone">
+      <static>true</static>
+      <pose>1.20 1.65 0.01 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry><box><size>0.70 0.70 0.02</size></box></geometry>
+          <material><diffuse>0.18 0.70 0.90 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Triangular obstacle in the inventory room -->
+    <model name="inventory_triangle_obstacle">
+      <static>true</static>
+      <pose>-1.70 -1.01 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <polyline>
+              <height>0.30</height>
+              <point>-0.45 -0.35</point>
+              <point>0.45 -0.35</point>
+              <point>0.00 0.45</point>
+            </polyline>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <polyline>
+              <height>0.30</height>
+              <point>-0.45 -0.35</point>
+              <point>0.45 -0.35</point>
+              <point>0.00 0.45</point>
+            </polyline>
+          </geometry>
+          <material><diffuse>0.82 0.30 0.16 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Pentagonal obstacle in the inventory room -->
+    <model name="inventory_pentagon_obstacle">
+      <static>true</static>
+      <pose>-1.27 1.22 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <polyline>
+              <height>0.30</height>
+              <point>0.00 0.42</point>
+              <point>0.40 0.12</point>
+              <point>0.25 -0.38</point>
+              <point>-0.25 -0.38</point>
+              <point>-0.40 0.12</point>
+            </polyline>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <polyline>
+              <height>0.30</height>
+              <point>0.00 0.42</point>
+              <point>0.40 0.12</point>
+              <point>0.25 -0.38</point>
+              <point>-0.25 -0.38</point>
+              <point>-0.40 0.12</point>
+            </polyline>
+          </geometry>
+          <material><diffuse>0.66 0.34 0.78 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Hexagonal obstacle in the service room -->
+    <model name="service_hexagon_obstacle">
+      <static>true</static>
+      <pose>1.86 -0.45 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <polyline>
+              <height>0.30</height>
+              <point>-0.35 0.00</point>
+              <point>-0.18 0.32</point>
+              <point>0.18 0.32</point>
+              <point>0.35 0.00</point>
+              <point>0.18 -0.32</point>
+              <point>-0.18 -0.32</point>
+            </polyline>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <polyline>
+              <height>0.30</height>
+              <point>-0.35 0.00</point>
+              <point>-0.18 0.32</point>
+              <point>0.18 0.32</point>
+              <point>0.35 0.00</point>
+              <point>0.18 -0.32</point>
+              <point>-0.18 -0.32</point>
+            </polyline>
+          </geometry>
+          <material><diffuse>0.20 0.58 0.72 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Irregular convex obstacle in the service room -->
+    <model name="service_irregular_obstacle">
+      <static>true</static>
+      <pose>2.45 1.23 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <polyline>
+              <height>0.30</height>
+              <point>-0.40 -0.25</point>
+              <point>0.25 -0.35</point>
+              <point>0.40 0.05</point>
+              <point>0.10 0.38</point>
+              <point>-0.35 0.20</point>
+            </polyline>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <polyline>
+              <height>0.30</height>
+              <point>-0.40 -0.25</point>
+              <point>0.25 -0.35</point>
+              <point>0.40 0.05</point>
+              <point>0.10 0.38</point>
+              <point>-0.35 0.20</point>
+            </polyline>
+          </geometry>
+          <material><diffuse>0.90 0.70 0.12 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Visual inventory labels: no collision, so navigation remains unchanged -->
+
+    <model name="inventory_tag_10">
+      <static>true</static>
+      <pose>-3.09 -1.55 0.13 0 0 0</pose>
+      <link name="link">
+        <visual name="marker">
+          <pose>0 0 0 0 1.57079632679 0</pose>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>0.260 0.260</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>1 1 1 1</ambient>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>0 0 0 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>model://inventory_tag_10/materials/textures/inventory_tag_10.png</albedo_map>
+                <roughness>0.9</roughness>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="inventory_tag_11">
+      <static>true</static>
+      <pose>-3.09 0 0.13 0 0 0</pose>
+      <link name="link">
+        <visual name="marker">
+          <pose>0 0 0 0 1.57079632679 0</pose>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>0.260 0.260</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>1 1 1 1</ambient>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>0 0 0 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>model://inventory_tag_11/materials/textures/inventory_tag_11.png</albedo_map>
+                <roughness>0.9</roughness>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="inventory_tag_12">
+      <static>true</static>
+      <pose>-3.09 1.55 0.13 0 0 0</pose>
+      <link name="link">
+        <visual name="marker">
+          <pose>0 0 0 0 1.57079632679 0</pose>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>0.260 0.260</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>1 1 1 1</ambient>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>0 0 0 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>model://inventory_tag_12/materials/textures/inventory_tag_12.png</albedo_map>
+                <roughness>0.9</roughness>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+  </world>
+</sdf>
