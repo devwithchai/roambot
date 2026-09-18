@@ -16,6 +16,7 @@
   <exec_depend>nav2_bringup</exec_depend>
   <exec_depend>roambot_navigation</exec_depend>
   <exec_depend>roambot_simulation</exec_depend>
+  <exec_depend>roambot_perception</exec_depend>
   <exec_depend>rviz2</exec_depend>
 
   <test_depend>ament_copyright</test_depend>

@@ -113,25 +113,25 @@ controller_server:
       lookahead_time: 1.0
 
       # RoamBot's normal maximum forward speed: 0.35 m/s.
-      desired_linear_vel: 0.45
-      min_approach_linear_velocity: -3.308
+      desired_linear_vel: 0.55
+      min_approach_linear_velocity: 0.12
 
       # Lets the robot turn in place when a sharp turn is necessary.
       use_rotate_to_heading: true
       rotate_to_heading_min_angle: 0.65
-      rotate_to_heading_angular_vel: 1.2
-      max_angular_accel: 2.5
+      rotate_to_heading_angular_vel: 1.5
+      max_angular_accel: 3.0
 
       # Slows down near walls and tight bends instead of stopping repeatedly.
       use_regulated_linear_velocity_scaling: true
       use_cost_regulated_linear_velocity_scaling: true
-      regulated_linear_scaling_min_radius: 0.55
-      regulated_linear_scaling_min_speed: 0.16
-      cost_scaling_dist: 0.35
+      regulated_linear_scaling_min_radius: 0.45
+      regulated_linear_scaling_min_speed: 0.20
+      cost_scaling_dist: 0.25
       cost_scaling_gain: 1.0
 
       # Final approach to the goal.
-      approach_velocity_scaling_dist: 0.60
+      approach_velocity_scaling_dist: 0.45
       transform_tolerance: 0.2
       allow_reversing: false
 
@@ -312,7 +312,7 @@ velocity_smoother:
     stamp_smoothed_velocity_with_smoothing_time: False
     scale_velocities: False
     feedback: "OPEN_LOOP"
-    max_velocity: [0.5, 0.0, 2.0]
+    max_velocity: [0.60, 0.0, 2.0]
     min_velocity: [-0.5, 0.0, -2.0]
     max_accel: [2.5, 0.0, 3.2]
     max_decel: [-2.5, 0.0, -3.2]
