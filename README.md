@@ -9,7 +9,7 @@ RoamBot is a lightweight ROS 2 Jazzy warehouse simulation built with Gazebo Harm
     <td width="50%" align="center">
       <img width="420" alt="RoamBot warehouse simulation" src="https://github.com/user-attachments/assets/b30d3729-7beb-4162-bad1-ed2a762698ed" />
       <br />
-      <sub>Warehouse simulation</sub>
+      <sub>Custom Robot URDF Visualization</sub>
     </td>
     <td width="50%" align="center">
       <img width="420" alt="Scout inventory inspection" src="https://github.com/user-attachments/assets/057703f7-1a48-42fa-bee7-ea4a7b35d7d6" />
