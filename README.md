@@ -2,9 +2,29 @@
 
 RoamBot is a lightweight ROS 2 Jazzy warehouse simulation built with Gazebo Harmonic. It starts as a custom differential-drive robot and now supports a coordinated two-robot warehouse workflow.
 
-<img width="1276" height="943" alt="Screenshot 2026-09-14 174027" src="https://github.com/user-attachments/assets/b30d3729-7beb-4162-bad1-ed2a762698ed" />
-<img width="1076" height="942" alt="Screenshot 2026-09-15 115521" src="https://github.com/user-attachments/assets/057703f7-1a48-42fa-bee7-ea4a7b35d7d6" />
-<img width="1076" height="910" alt="Screenshot 2026-09-18 185150" src="https://github.com/user-attachments/assets/b124b820-8b90-4771-a85b-6f053366ad59" />
+## Demo snapshots
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img width="420" alt="RoamBot warehouse simulation" src="https://github.com/user-attachments/assets/b30d3729-7beb-4162-bad1-ed2a762698ed" />
+      <br />
+      <sub>Warehouse simulation</sub>
+    </td>
+    <td width="50%" align="center">
+      <img width="420" alt="Scout inventory inspection" src="https://github.com/user-attachments/assets/057703f7-1a48-42fa-bee7-ea4a7b35d7d6" />
+      <br />
+      <sub>Scout inventory inspection</sub>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <img width="460" alt="Coordinated two-robot warehouse workflow" src="https://github.com/user-attachments/assets/b124b820-8b90-4771-a85b-6f053366ad59" />
+      <br />
+      <sub>Coordinated two-robot workflow</sub>
+    </td>
+  </tr>
+</table>
 
 ## Releases
 
