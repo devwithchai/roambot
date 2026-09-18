@@ -1,166 +1,159 @@
 # RoamBot
 
-RoamBot is a lightweight 2-wheel differential-drive mobile robot simulation built with ROS 2 Jazzy and Gazebo Harmonic.
+RoamBot is a lightweight ROS 2 Jazzy warehouse simulation built with Gazebo Harmonic. It starts as a custom differential-drive robot and now supports a coordinated two-robot warehouse workflow.
 
-It is designed as a complete autonomous-navigation project: a custom robot model drives in a simulated arena, senses walls using 2D LiDAR, builds a map with SLAM, and navigates to goals using Nav2.
+## Releases
 
-<img width="800" height="449" alt="roambot-nav2-demo" src="https://github.com/user-attachments/assets/484acb33-f66a-413a-a8bd-2c76ee65aa48" />
+- **v1.0.0 — Autonomous navigation:** one robot, LiDAR, SLAM, AMCL, and Nav2.
+- **v2.0.0 — Multi-robot warehouse coordination:** Scout inspects inventory tags; Service fulfils requested shelf tasks; both share warehouse doorways safely.
 
-## Features
+## v2.0.0 capabilities
 
-- Custom RoamBot Xacro/URDF robot model
-- Differential-drive motion in Gazebo Harmonic
-- Wheel odometry and TF transforms
-- Simulated 2D LiDAR publishing `/scan`
-- Custom indoor arena with walls and obstacles
-- SLAM mapping using `slam_toolbox`
-- Saved occupancy-grid map
-- AMCL localization on the saved map
-- Autonomous goal navigation using Nav2
-- ROS–Gazebo communication through `ros_gz_bridge`
-- One-command Gazebo, Nav2, and RViz bringup
+- Two independently namespaced robots: `/scout` and `/service`
+- Scout camera-based ArUco inventory-tag inspection for shelves 1–3
+- Published inventory scan report
+- Inventory-ID request workflow for Service dispatch
+- One controlled retry for a failed Service navigation task
+- Dynamic selection of the shortest planned route through either warehouse doorway
+- Shared-door traffic manager using request, grant, and release messages
+- Continuous motion through an uncongested doorway; waiting only for an actual same-door conflict
+- Unified one-command warehouse launch
+
+## Workflow
+
+1. **Scout** visits the three shelf inspection poses and confirms tags 10, 11, and 12.
+2. Scout publishes its scan report and returns to its desk through the shortest planned doorway route.
+3. A user requests an inventory ID.
+4. **Service** accepts the matching confirmed shelf, travels there, then returns to its desk.
+5. When both robots need the same doorway, the Traffic Manager grants access to one robot at a time. Robots using different doors may move concurrently.
 
 ## Project structure
 
 ```text
 roambot_ws/
 ├── src/
-│   ├── roambot_description/   # Robot body, wheels, caster, and LiDAR model
-│   ├── roambot_simulation/    # Gazebo worlds, spawning, drive system, bridges
-│   ├── roambot_navigation/    # SLAM, saved map, AMCL, and Nav2 configuration
-│   └── roambot_bringup/       # One-command Gazebo, Nav2, and RViz launcher
+│   ├── roambot_description/  # Reusable robot Xacro/URDF model
+│   ├── roambot_simulation/   # Warehouse world, robot spawning, Gazebo bridges
+│   ├── roambot_navigation/   # Namespaced AMCL and Nav2 configurations
+│   ├── roambot_perception/   # Tag detection, missions, coordinator, traffic manager
+│   └── roambot_bringup/      # Unified workflow launch
 ├── README.md
 └── .gitignore
 ```
 
-## System architecture
-
-```mermaid
-flowchart TD
-    G[Gazebo Harmonic] -->|LiDAR scan| B[ros_gz_bridge]
-    G -->|Odometry and TF| B
-    B --> S[ROS 2 topics]
-    S --> SLAM[slam_toolbox]
-    S --> N[Nav2]
-    N -->|cmd_vel| B
-    B --> G
-```
-
-- **Gazebo Harmonic** simulates RoamBot, the arena, physics, wheels, and LiDAR.
-- **ROS 2 topics** are named data channels such as `/scan` and `/cmd_vel`.
-- **ros_gz_bridge** connects Gazebo messages to ROS 2 messages.
-- **SLAM** means *Simultaneous Localization and Mapping*: the robot builds a map while estimating where it is.
-- **Nav2** is the ROS 2 navigation system. It plans a safe path and commands the robot to follow it.
-
 ## Requirements
 
-- Ubuntu/Docker environment with ROS 2 Jazzy
+- ROS 2 Jazzy
 - Gazebo Harmonic
-- `ros_gz_sim`
-- `ros_gz_bridge`
-- `slam_toolbox`
 - `nav2_bringup`
+- `slam_toolbox`
+- `ros_gz_sim` and `ros_gz_bridge`
+- OpenCV with ArUco support
 
 ## Build
 
 ```bash
 source /opt/ros/jazzy/setup.bash
-
 cd ~/roambot_ws
 colcon build --symlink-install
 source install/setup.bash
 ```
 
-## Quick start: autonomous navigation
+## Run the v2.0.0 warehouse workflow
 
-After building the workspace, start the complete RoamBot navigation system with one command:
-
-```bash
-source /opt/ros/jazzy/setup.bash
-cd ~/roambot_ws
-source install/setup.bash
-
-ros2 launch roambot_bringup bringup.launch.py
-```
-
-This starts Gazebo Harmonic, spawns RoamBot in the arena, bridges simulation data to ROS 2, starts Nav2 localization and planning, and opens RViz.
-
-In RViz, select **Nav2 Goal**, then click and drag on a free area of the map. RoamBot will plan and follow a collision-free path to that goal.
-
-> The unified launch uses the already saved `roambot_arena` map. Use SLAM separately only when creating or updating a map.
-
-## Individual launch modes
-
-### 1. Launch RoamBot in the arena
+### 1. Launch the complete backend
 
 ```bash
 source /opt/ros/jazzy/setup.bash
 cd ~/roambot_ws
 source install/setup.bash
 
-ros2 launch roambot_simulation arena.launch.py
+ros2 launch roambot_bringup warehouse_workflow.launch.py
 ```
 
-This starts Gazebo, spawns RoamBot, starts the differential-drive system, and bridges Gazebo data to ROS 2.
+This starts Gazebo, both Nav2 stacks, inventory-tag detection, Service dispatch, the task coordinator, and the doorway Traffic Manager.
 
-### 2. Run SLAM to create a map
+### 2. Start Scout inspection
 
-Open a second terminal:
+Open another terminal:
 
 ```bash
 source /opt/ros/jazzy/setup.bash
 cd ~/roambot_ws
 source install/setup.bash
 
-ros2 launch roambot_navigation slam.launch.py
+ros2 run roambot_perception inventory_scan_mission
 ```
 
-Open a third terminal for manual driving:
+Scout inspects shelves 1–3, publishes the scan report, and returns to its desk.
+
+### 3. Request inventory
+
+After Scout completes its scan, open another terminal and request an ID:
 
 ```bash
 source /opt/ros/jazzy/setup.bash
 cd ~/roambot_ws
 source install/setup.bash
 
-ros2 run teleop_twist_keyboard teleop_twist_keyboard
+ros2 topic pub --once \
+  /warehouse/inventory_request \
+  std_msgs/msg/String \
+  "{data: '10'}"
 ```
 
-Use the keyboard to drive around the arena and observe the map in RViz.
+Valid IDs are `10`, `11`, and `12`. Service travels to the confirmed shelf and returns to its desk.
 
-### 3. Run autonomous navigation
+## Observe coordination
 
-After a map has been saved, launch Nav2:
+### Task status
 
 ```bash
-source /opt/ros/jazzy/setup.bash
-cd ~/roambot_ws
-source install/setup.bash
-
-ros2 launch roambot_navigation nav2.launch.py
+ros2 topic echo /warehouse/task_status
 ```
 
-In RViz:
+### Doorway traffic status
 
-1. Select **Nav2 Goal**.
-2. Click and drag on a free area of the map.
-3. RoamBot plans a route and drives to that goal while avoiding obstacles.
+```bash
+ros2 topic echo /warehouse/traffic_status
+```
 
-## Important ROS 2 topics
+A same-door handoff looks like:
 
-| Topic        | Meaning                                                           |
-| ------------ | ----------------------------------------------------------------- |
-| `/cmd_vel` | Desired forward and turning speed sent to the robot               |
-| `/odom`    | Estimated robot movement based on wheel rotation                  |
-| `/scan`    | Distance readings from the 2D LiDAR                               |
-| `/tf`      | Coordinate-frame relationships, such as`odom → base_footprint` |
-| `/map`     | The occupancy-grid map used by SLAM and Nav2                      |
-| `/clock`   | Gazebo simulation time                                            |
+```text
+Traffic request: scout queued for upper_door.
+Traffic grant: scout may enter upper_door.
+Traffic request: service queued for upper_door.
+Traffic release: scout cleared upper_door.
+Traffic grant: service may enter upper_door.
+```
 
-## Navigation setup
+This demonstrates mutual exclusion: Service waits only while Scout owns the same doorway.
+
+## Core ROS topics
+
+| Topic | Purpose |
+| --- | --- |
+| `/scout/inventory/detections` | Inventory tags visible to Scout |
+| `/scout/inventory/scan_report` | Scout's completed shelf-confirmation report |
+| `/warehouse/inventory_request` | User request containing inventory ID 10, 11, or 12 |
+| `/warehouse/task_status` | Coordinator task state |
+| `/warehouse/traffic_status` | Doorway queue, grant, and release events |
+| `/warehouse/traffic/request` | Robot requests doorway access |
+| `/warehouse/traffic/grant` | Traffic Manager grants doorway access |
+| `/warehouse/traffic/release` | Robot releases a cleared doorway |
+
+## Navigation stack
 
 RoamBot uses:
 
-- **AMCL** for localization on the saved map.
-- **Nav2** for planning and goal navigation.
-- **Regulated Pure Pursuit** as the local controller for smoother turning in the compact arena.
-- A `0.18 m` robot safety radius and inflated obstacle boundaries to avoid wall collisions.
+- **AMCL** for localization on the saved warehouse map.
+- **Nav2** for planning and navigation.
+- **Regulated Pure Pursuit** as the local controller.
+- **ros_gz_bridge** to connect Gazebo and ROS 2 communication.
+
+## Roadmap
+
+- **v2.1.0:** lightweight inventory-aware GUI, coloured-box quantities, and empty-shelf confirmation
+- **v2.2.0:** comparison and implementation of selected robot path-planning algorithms
+- **v3.0.0:** robot arms with pickup and replenishment operations
