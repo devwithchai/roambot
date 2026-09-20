@@ -1,8 +1,14 @@
 import json
+import subprocess
 from datetime import datetime
+from pathlib import Path
 import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext, ttk
 
+from ament_index_python.packages import (
+    PackageNotFoundError,
+    get_package_share_directory,
+)
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
@@ -49,6 +55,7 @@ class WarehouseMissionConsole:
         self.scan_state = "waiting"
         self.service_state = "waiting"
         self.service_shelf = None
+        self.scout_camera_process = None
         self.readiness_seen = {
             "scout": False,
             "service": False,
@@ -150,8 +157,58 @@ class WarehouseMissionConsole:
         style.configure("Status.TLabel", font=("", 10, "bold"))
         style.configure("Small.TLabel", font=("", 9))
 
-        container = ttk.Frame(self.root, padding=16)
-        container.pack(fill=tk.BOTH, expand=True)
+        scroll_shell = ttk.Frame(self.root)
+        scroll_shell.pack(fill=tk.BOTH, expand=True)
+
+        self.dashboard_canvas = tk.Canvas(
+            scroll_shell,
+            borderwidth=0,
+            highlightthickness=0,
+        )
+        dashboard_scrollbar = ttk.Scrollbar(
+            scroll_shell,
+            orient=tk.VERTICAL,
+            command=self.dashboard_canvas.yview,
+        )
+        self.dashboard_canvas.configure(
+            yscrollcommand=dashboard_scrollbar.set
+        )
+        dashboard_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.dashboard_canvas.pack(
+            side=tk.LEFT,
+            fill=tk.BOTH,
+            expand=True,
+        )
+
+        container = ttk.Frame(self.dashboard_canvas, padding=16)
+        self.dashboard_window = self.dashboard_canvas.create_window(
+            (0, 0),
+            window=container,
+            anchor=tk.NW,
+        )
+        container.bind(
+            "<Configure>",
+            self.update_dashboard_scroll_region,
+        )
+        self.dashboard_canvas.bind(
+            "<Configure>",
+            self.resize_dashboard,
+        )
+        self.root.bind_all(
+            "<MouseWheel>",
+            self.on_mousewheel,
+            add="+",
+        )
+        self.root.bind_all(
+            "<Button-4>",
+            self.on_mousewheel_linux_up,
+            add="+",
+        )
+        self.root.bind_all(
+            "<Button-5>",
+            self.on_mousewheel_linux_down,
+            add="+",
+        )
 
         header = ttk.Frame(container)
         header.pack(fill=tk.X)
@@ -178,6 +235,19 @@ class WarehouseMissionConsole:
             command=self.export_summary,
         )
         self.export_button.pack(side=tk.RIGHT, padx=(10, 0), pady=4)
+
+        self.camera_button = ttk.Button(
+            header,
+            text="View Scout Camera",
+            command=self.open_scout_camera,
+        )
+        self.camera_button.pack(side=tk.RIGHT, padx=(10, 0), pady=4)
+
+        ttk.Button(
+            header,
+            text="Live Log",
+            command=self.scroll_to_live_log,
+        ).pack(side=tk.RIGHT, padx=(10, 0), pady=4)
 
         self.scan_button = ttk.Button(
             header,
@@ -372,7 +442,7 @@ class WarehouseMissionConsole:
 
         events_frame = ttk.LabelFrame(
             container,
-            text="Mission events",
+            text="Live mission log",
             padding=8,
         )
         events_frame.pack(fill=tk.BOTH, expand=True, pady=(8, 0))
@@ -407,7 +477,7 @@ class WarehouseMissionConsole:
 
         self.events = scrolledtext.ScrolledText(
             events_frame,
-            height=8,
+            height=10,
             state=tk.DISABLED,
             wrap=tk.WORD,
         )
@@ -529,6 +599,112 @@ class WarehouseMissionConsole:
             "explanation": explanation_var,
             "tree": tree,
         }
+
+
+    def update_dashboard_scroll_region(self, _event=None):
+        self.dashboard_canvas.configure(
+            scrollregion=self.dashboard_canvas.bbox("all")
+        )
+
+    def resize_dashboard(self, event):
+        self.dashboard_canvas.itemconfigure(
+            self.dashboard_window,
+            width=event.width,
+        )
+
+    def should_scroll_dashboard(self, event):
+        return not isinstance(event.widget, tk.Text)
+
+    def on_mousewheel(self, event):
+        if self.should_scroll_dashboard(event):
+            self.dashboard_canvas.yview_scroll(
+                int(-event.delta / 120),
+                "units",
+            )
+
+    def on_mousewheel_linux_up(self, event):
+        if self.should_scroll_dashboard(event):
+            self.dashboard_canvas.yview_scroll(-3, "units")
+
+    def on_mousewheel_linux_down(self, event):
+        if self.should_scroll_dashboard(event):
+            self.dashboard_canvas.yview_scroll(3, "units")
+
+    def scroll_to_live_log(self):
+        self.root.update_idletasks()
+
+        total_height = self.dashboard_canvas.bbox("all")
+        if total_height is None:
+            return
+
+        scrollable_height = max(
+            1,
+            total_height[3] - self.dashboard_canvas.winfo_height(),
+        )
+        target = max(0, self.events.winfo_y() - 16)
+        self.dashboard_canvas.yview_moveto(
+            min(1.0, target / scrollable_height)
+        )
+        self.events.focus_set()
+
+    def open_scout_camera(self):
+        if (
+            self.scout_camera_process is not None
+            and self.scout_camera_process.poll() is None
+        ):
+            self.append_event(
+                "Scout camera view is already open.",
+                "System",
+            )
+            return
+
+        try:
+            package_share = get_package_share_directory(
+                "roambot_perception"
+            )
+        except PackageNotFoundError:
+            messagebox.showerror(
+                "Camera viewer unavailable",
+                "The installed roambot_perception package was not found.",
+                parent=self.root,
+            )
+            return
+
+        config_path = (
+            Path(package_share) / "rviz" / "scout_camera_view.rviz"
+        )
+        if not config_path.is_file():
+            messagebox.showerror(
+                "Camera viewer unavailable",
+                "Scout camera RViz configuration was not installed. "
+                "Rebuild roambot_perception and source install/setup.bash.",
+                parent=self.root,
+            )
+            return
+
+        try:
+            self.scout_camera_process = subprocess.Popen(
+                ["rviz2", "-d", str(config_path)]
+            )
+        except FileNotFoundError:
+            messagebox.showerror(
+                "RViz unavailable",
+                "rviz2 was not found in this ROS environment.",
+                parent=self.root,
+            )
+            return
+        except OSError as error:
+            messagebox.showerror(
+                "Camera viewer unavailable",
+                f"Could not start RViz:\n{error}",
+                parent=self.root,
+            )
+            return
+
+        self.append_event(
+            "Opened Scout first-person camera view in RViz.",
+            "System",
+        )
 
     def snapshot_callback(self, message):
         try:
@@ -1237,6 +1413,12 @@ class WarehouseMissionConsole:
         self.root.after(50, self.spin_ros)
 
     def close(self):
+        if (
+            self.scout_camera_process is not None
+            and self.scout_camera_process.poll() is None
+        ):
+            self.scout_camera_process.terminate()
+
         self.node.destroy_node()
         rclpy.shutdown()
         self.root.destroy()
