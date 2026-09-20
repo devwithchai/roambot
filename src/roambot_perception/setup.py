@@ -34,6 +34,8 @@ setup(
             "roambot_perception.warehouse_task_coordinator:main",
             "doorway_traffic_manager = "
             "roambot_perception.doorway_traffic_manager:main",
+            "warehouse_mission_console = "
+            "roambot_perception.warehouse_mission_console:main",
         ],
     },
 )
