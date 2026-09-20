@@ -520,7 +520,7 @@ class InventoryScanMission(BasicNavigator):
             self.get_logger().error(
                 "No feasible return route to the Scout desk bay."
             )
-            return
+            return False
 
         door_name = route["door_name"]
         clearance_name = route["clearance_name"]
@@ -541,10 +541,12 @@ class InventoryScanMission(BasicNavigator):
             self.get_logger().info(
                 "Scout returned to the service-room desk."
             )
-        else:
-            self.get_logger().warning(
-                "Scout crossed safely but could not reach its desk bay."
-            )
+            return True
+
+        self.get_logger().warning(
+            "Scout could not return to its desk bay."
+        )
+        return False
 
     def inspect_shelf(self, shelf):
         self.get_logger().info(
@@ -616,11 +618,18 @@ class InventoryScanMission(BasicNavigator):
                 "returning",
                 message="Inspection complete. Scout is returning to its desk.",
             )
-            self.return_to_desk()
-            self.publish_inspection_status(
-                "complete",
-                message="Scout inspection complete.",
-            )
+            returned_to_desk = self.return_to_desk()
+
+            if returned_to_desk:
+                self.publish_inspection_status(
+                    "complete",
+                    message="Scout inspection complete and parked at its desk.",
+                )
+            else:
+                self.publish_inspection_status(
+                    "failed",
+                    message="Scout inspection finished, but return to desk failed.",
+                )
         finally:
             self.scan_running = False
 
