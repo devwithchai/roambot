@@ -376,7 +376,13 @@ class WarehouseMissionConsole:
             self.scan_button.configure(state=tk.DISABLED)
         else:
             self.scan_button.configure(state=tk.NORMAL)
-            self.scan_button.configure(text="Rescan Inventory")
+            self.scan_button.configure(
+                text=(
+                    "Rescan Inventory"
+                    if self.shelves
+                    else "Start Inspection"
+                )
+            )
 
         self.append_event(detail, "Scan")
 
