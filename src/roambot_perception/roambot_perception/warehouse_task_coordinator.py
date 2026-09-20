@@ -90,6 +90,12 @@ class WarehouseTaskCoordinator(Node):
                     "confirmed": confirmed,
                     "status": status,
                     "items": items,
+                    "tag_evidence": (
+                        "scout_camera"
+                        if confirmed
+                        else "awaiting_scout_camera"
+                    ),
+                    "inventory_source": "simulation_catalog",
                 }
             )
 
