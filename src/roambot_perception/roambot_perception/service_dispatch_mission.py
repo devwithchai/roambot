@@ -1,3 +1,4 @@
+import json
 import math
 import re
 import time
@@ -72,6 +73,11 @@ class ServiceDispatchMission(BasicNavigator):
             "inventory/dispatch_status",
             10,
         )
+        self.state_pub = self.create_publisher(
+            String,
+            "/warehouse/service_state",
+            report_qos,
+        )
         self.traffic_request_pub = self.create_publisher(
             String,
             "/warehouse/traffic/request",
@@ -114,6 +120,22 @@ class ServiceDispatchMission(BasicNavigator):
         self.status_pub.publish(message)
         self.get_logger().info(text)
 
+    def publish_state(
+        self,
+        state,
+        current_shelf=None,
+        message=None,
+    ):
+        status = String()
+        status.data = json.dumps(
+            {
+                "state": state,
+                "current_shelf": current_shelf,
+                "message": message or "",
+            }
+        )
+        self.state_pub.publish(status)
+
     def scan_report_callback(self, message):
         self.confirmed_shelves = {
             shelf_name: int(tag_id)
@@ -145,6 +167,11 @@ class ServiceDispatchMission(BasicNavigator):
             return
 
         self.pending_shelf = shelf_name
+        self.publish_state(
+            "queued",
+            current_shelf=shelf_name,
+            message=f"Service dispatch accepted for {shelf_name}.",
+        )
         self.get_logger().info(
             f"Dispatch accepted for {shelf_name}."
         )
@@ -534,6 +561,10 @@ class ServiceDispatchMission(BasicNavigator):
         )
 
     def return_to_desk(self):
+        self.publish_state(
+            "returning",
+            message="Service is returning to its desk.",
+        )
         self.get_logger().info(
             "Service task complete. Selecting a return route to the desk."
         )
@@ -564,6 +595,10 @@ class ServiceDispatchMission(BasicNavigator):
             self.publish_status(
                 "Service returned to the service-room desk."
             )
+            self.publish_state(
+                "idle",
+                message="Service is parked at its desk.",
+            )
         else:
             self.get_logger().warning(
                 "Service crossed safely but could not reach "
@@ -573,17 +608,32 @@ class ServiceDispatchMission(BasicNavigator):
     def dispatch_to_shelf(self, shelf_name):
         shelf = SHELF_POSES[shelf_name]
 
+        self.publish_state(
+            "travelling_to_shelf",
+            current_shelf=shelf_name,
+            message=f"Service is travelling to {shelf_name}.",
+        )
         self.get_logger().info(
             f"Service navigating to {shelf_name}."
         )
 
         if self.travel_to_shelf(shelf):
+            self.publish_state(
+                "at_shelf",
+                current_shelf=shelf_name,
+                message=f"Service reached {shelf_name}.",
+            )
             self.publish_status(
                 f"Service reached {shelf_name} "
                 f"for inventory tag id={shelf['id']}"
             )
             self.return_to_desk()
         else:
+            self.publish_state(
+                "failed",
+                current_shelf=shelf_name,
+                message=f"Service could not reach {shelf_name}.",
+            )
             self.publish_status(
                 f"Service could not reach {shelf_name}"
             )
@@ -597,6 +647,10 @@ class ServiceDispatchMission(BasicNavigator):
         if not self.wait_for_map_pose():
             return
 
+        self.publish_state(
+            "idle",
+            message="Service is ready for inventory dispatch.",
+        )
         self.get_logger().info(
             "Ready. Send shelf_1, shelf_2, or shelf_3 "
             "to /service/inventory/dispatch_request."
