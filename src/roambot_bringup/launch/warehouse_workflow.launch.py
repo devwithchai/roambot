@@ -2,12 +2,13 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, TimerAction
+from launch.actions import IncludeLaunchDescription, LogInfo, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 
 
-MISSION_NODES_DELAY = 38.0
+# Mission nodes start after both robots have completed their staged Nav2 startup.
+MISSION_NODES_DELAY = 60.0
 
 
 def generate_launch_description():
@@ -25,7 +26,7 @@ def generate_launch_description():
         )
     )
 
-    # 2. Start both independent Nav2 stacks in a staggered sequence.
+    # 2. Start each robot's localization and navigation in controlled stages.
     navigation = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
@@ -72,16 +73,24 @@ def generate_launch_description():
         output="screen",
     )
 
-    # Gazebo starts first. warehouse_nav2.launch.py then starts Scout and
-    # Service Nav2 separately. Start perception only after both stacks have
-    # had time to create their lifecycle services.
+    # Gazebo receives a short head start. Nav2 then starts in four stages:
+    # Scout localization, Scout navigation, Service localization, and Service
+    # navigation. Mission nodes add no load until that work is complete.
     delayed_navigation = TimerAction(
         period=4.0,
-        actions=[navigation],
+        actions=[
+            LogInfo(
+                msg="[RoamBot] Starting staged Nav2 bringup."
+            ),
+            navigation,
+        ],
     )
     delayed_mission_nodes = TimerAction(
         period=MISSION_NODES_DELAY,
         actions=[
+            LogInfo(
+                msg="[RoamBot] Starting warehouse mission nodes."
+            ),
             detector,
             scanner,
             service_dispatcher,
