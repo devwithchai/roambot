@@ -6,7 +6,7 @@ The project is designed to be understandable from the operator’s point of view
 
 ## Demo video
 
-> **Coming soon:** this section will contain a short end-to-end demo of GUI-controlled inventory inspection, Service dispatch, doorway coordination, live logs, route decisions, and Scout’s first-person camera view.
+https://github.com/user-attachments/assets/219687f8-087e-4c82-be4c-8bf297d3dd17
 
 <!-- Replace this note with the final uploaded demo-video link. -->
 
@@ -52,7 +52,7 @@ The project is designed to be understandable from the operator’s point of view
 | --- | --- | --- |
 | **v1.0.0** | Released | Single-robot navigation: custom RoamBot model, LiDAR, mapping/localization, and Nav2 navigation |
 | **v2.0.0** | Released | Multi-robot warehouse coordination: Scout inspection, Service dispatch, doorway permissions, unified launch |
-| **v2.1.0** | Implemented — pending release tag | Inventory-aware GUI, coloured-box quantities, route explanations, live mission log, export, and Scout camera view |
+| **v2.1.0** | Implemented | Inventory-aware GUI, coloured-box quantities, route explanations, live mission log, export, and Scout camera view |
 | **v2.2.0** | Planned | Compare and implement selected robot path-planning algorithms |
 | **v3.0.0** | Planned | Robot arms, pickup/replenishment, and physical warehouse operations |
 
