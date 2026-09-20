@@ -1,7 +1,9 @@
+import json
 from collections import deque
 
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
 from std_msgs.msg import String
 
 
@@ -16,10 +18,21 @@ class DoorwayTrafficManager(Node):
         self.owners = {door: None for door in DOORS}
         self.queues = {door: deque() for door in DOORS}
 
+        traffic_qos = QoSProfile(
+            depth=1,
+            history=HistoryPolicy.KEEP_LAST,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+        )
+
         self.grant_pub = self.create_publisher(
             String,
             "/warehouse/traffic/grant",
             10,
+        )
+        self.snapshot_pub = self.create_publisher(
+            String,
+            "/warehouse/traffic_snapshot",
+            traffic_qos,
         )
         self.status_pub = self.create_publisher(
             String,
@@ -40,9 +53,25 @@ class DoorwayTrafficManager(Node):
             10,
         )
 
+        self.publish_snapshot()
         self.get_logger().info(
             "Traffic manager ready for lower_door and upper_door."
         )
+
+    def publish_snapshot(self):
+        snapshot = String()
+        snapshot.data = json.dumps(
+            {
+                "doors": {
+                    door: {
+                        "owner": self.owners[door],
+                        "queue": list(self.queues[door]),
+                    }
+                    for door in DOORS
+                }
+            }
+        )
+        self.snapshot_pub.publish(snapshot)
 
     def publish_status(self, text):
         message = String()
@@ -77,6 +106,7 @@ class DoorwayTrafficManager(Node):
         self.publish_status(
             f"Traffic grant: {robot} may enter {door}."
         )
+        self.publish_snapshot()
 
     def request_callback(self, message):
         robot, door = self.parse_message(message.data)
@@ -99,6 +129,7 @@ class DoorwayTrafficManager(Node):
             f"Traffic request: {robot} queued for {door}."
         )
         self.grant_next_robot(door)
+        self.publish_snapshot()
 
     def release_callback(self, message):
         robot, door = self.parse_message(message.data)
@@ -121,6 +152,7 @@ class DoorwayTrafficManager(Node):
             f"Traffic release: {robot} cleared {door}."
         )
         self.grant_next_robot(door)
+        self.publish_snapshot()
 
 
 def main():

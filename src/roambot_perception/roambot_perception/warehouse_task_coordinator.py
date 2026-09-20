@@ -1,9 +1,12 @@
+import json
 import re
 
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
 from std_msgs.msg import String
+
+from roambot_perception.inventory_catalog import SHELF_INVENTORY
 
 
 class WarehouseTaskCoordinator(Node):
@@ -29,6 +32,11 @@ class WarehouseTaskCoordinator(Node):
             String,
             "/warehouse/task_status",
             10,
+        )
+        self.inventory_pub = self.create_publisher(
+            String,
+            "/warehouse/inventory_snapshot",
+            report_qos,
         )
 
         self.create_subscription(
@@ -60,6 +68,46 @@ class WarehouseTaskCoordinator(Node):
         self.status_pub.publish(message)
         self.get_logger().info(text)
 
+    def publish_inventory_snapshot(self):
+        shelves = []
+
+        for shelf_name, shelf in SHELF_INVENTORY.items():
+            tag_id = shelf["tag_id"]
+            confirmed = self.confirmed_inventory.get(tag_id) == shelf_name
+            items = shelf["items"] if confirmed else []
+
+            if not confirmed:
+                status = "not_confirmed"
+            elif items:
+                status = "available"
+            else:
+                status = "empty"
+
+            shelves.append(
+                {
+                    "name": shelf_name,
+                    "tag_id": tag_id,
+                    "confirmed": confirmed,
+                    "status": status,
+                    "items": items,
+                    "tag_evidence": (
+                        "scout_camera"
+                        if confirmed
+                        else "awaiting_scout_camera"
+                    ),
+                    "inventory_source": "simulation_catalog",
+                }
+            )
+
+        snapshot = String()
+        snapshot.data = json.dumps(
+            {
+                "scan_complete": True,
+                "shelves": shelves,
+            }
+        )
+        self.inventory_pub.publish(snapshot)
+
     def scan_report_callback(self, message):
         self.confirmed_inventory = {
             int(tag_id): shelf_name
@@ -69,6 +117,7 @@ class WarehouseTaskCoordinator(Node):
             )
         }
 
+        self.publish_inventory_snapshot()
         self.publish_status(
             "Scout inventory available: "
             f"{self.confirmed_inventory or 'none'}"
@@ -114,7 +163,6 @@ class WarehouseTaskCoordinator(Node):
         }
 
         self.send_dispatch(shelf_name)
-
         self.publish_status(
             f"Task accepted: id={requested_id}, "
             f"dispatching Service to {shelf_name}."
@@ -157,7 +205,6 @@ class WarehouseTaskCoordinator(Node):
 
         if self.active_task["attempts"] == 0:
             self.active_task["attempts"] = 1
-
             self.publish_status(
                 f"First attempt failed for inventory id={requested_id}. "
                 "Retrying once in 2 seconds."

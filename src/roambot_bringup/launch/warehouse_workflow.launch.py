@@ -2,13 +2,16 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, TimerAction
+from launch.actions import IncludeLaunchDescription, LogInfo, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 
 
+# Mission nodes start after both robots have completed their staged Nav2 startup.
+MISSION_NODES_DELAY = 60.0
+
+
 def generate_launch_description():
-    # Locate installed ROS package folders.
     simulation_share = get_package_share_directory("roambot_simulation")
     navigation_share = get_package_share_directory("roambot_navigation")
 
@@ -23,7 +26,7 @@ def generate_launch_description():
         )
     )
 
-    # 2. Start both independent Nav2 stacks.
+    # 2. Start each robot's localization and navigation in controlled stages.
     navigation = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
@@ -41,40 +44,55 @@ def generate_launch_description():
         output="screen",
     )
 
-    # 4. Service receives shelf-dispatch commands and navigates there.
+    # 4. Scout waits for a GUI inspection request.
+    scanner = Node(
+        package="roambot_perception",
+        executable="inventory_scan_mission",
+        parameters=[{"auto_start": False}],
+        output="screen",
+    )
+
+    # 5. Service receives shelf-dispatch commands and navigates there.
     service_dispatcher = Node(
         package="roambot_perception",
         executable="service_dispatch_mission",
         output="screen",
     )
 
-    # 5. Coordinator converts inventory-ID requests into Service tasks.
+    # 6. Coordinator converts inventory-ID requests into Service tasks.
     coordinator = Node(
         package="roambot_perception",
         executable="warehouse_task_coordinator",
         output="screen",
     )
 
-    # 6. Grants one robot at a time access to a shared doorway.
+    # 7. Grants one robot at a time access to a shared doorway.
     traffic_manager = Node(
         package="roambot_perception",
         executable="doorway_traffic_manager",
         output="screen",
     )
 
-    # Gazebo begins first. The navigation launch itself has its own
-    # Scout/Service startup delays.
+    # Gazebo receives a short head start. Nav2 then starts in four stages:
+    # Scout localization, Scout navigation, Service localization, and Service
+    # navigation. Mission nodes add no load until that work is complete.
     delayed_navigation = TimerAction(
         period=4.0,
-        actions=[navigation],
-    )
-
-    # Start mission-support nodes after the simulated robots and camera
-    # have had time to appear. The nodes also wait safely for Nav2/report data.
-    delayed_mission_nodes = TimerAction(
-        period=16.0,
         actions=[
+            LogInfo(
+                msg="[RoamBot] Starting staged Nav2 bringup."
+            ),
+            navigation,
+        ],
+    )
+    delayed_mission_nodes = TimerAction(
+        period=MISSION_NODES_DELAY,
+        actions=[
+            LogInfo(
+                msg="[RoamBot] Starting warehouse mission nodes."
+            ),
             detector,
+            scanner,
             service_dispatcher,
             coordinator,
             traffic_manager,

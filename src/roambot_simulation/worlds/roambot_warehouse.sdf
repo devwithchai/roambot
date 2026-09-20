@@ -165,24 +165,7 @@
           <material><diffuse>0.22 0.25 0.28 1</diffuse></material>
         </visual>
 
-        <!-- Visible inventory boxes; tags will be added later. -->
-        <visual name="item_box_red">
-          <pose>0.08 -0.25 0.13 0 0 0</pose>
-          <geometry><box><size>0.16 0.16 0.20</size></box></geometry>
-          <material><diffuse>0.80 0.20 0.16 1</diffuse></material>
-        </visual>
-
-        <visual name="item_box_blue">
-          <pose>0.08 0 0.13 0 0 0</pose>
-          <geometry><box><size>0.16 0.16 0.20</size></box></geometry>
-          <material><diffuse>0.18 0.42 0.82 1</diffuse></material>
-        </visual>
-
-        <visual name="item_box_green">
-          <pose>0.08 0.25 0.13 0 0 0</pose>
-          <geometry><box><size>0.16 0.16 0.20</size></box></geometry>
-          <material><diffuse>0.20 0.66 0.32 1</diffuse></material>
-        </visual>
+        <!-- Shelf 1 is intentionally empty. -->
       </link>
     </model>
 
@@ -230,21 +213,21 @@
           <material><diffuse>0.22 0.25 0.28 1</diffuse></material>
         </visual>
 
-        <!-- Visible inventory boxes; tags will be added later. -->
-        <visual name="item_box_red">
-          <pose>0.08 -0.25 0.13 0 0 0</pose>
+        <!-- Shelf 2: one red box and two green boxes. -->
+        <visual name="item_box_red_1">
+          <pose>0.08 -0.26 0.13 0 0 0</pose>
           <geometry><box><size>0.16 0.16 0.20</size></box></geometry>
           <material><diffuse>0.80 0.20 0.16 1</diffuse></material>
         </visual>
 
-        <visual name="item_box_blue">
-          <pose>0.08 0 0.13 0 0 0</pose>
+        <visual name="item_box_green_1">
+          <pose>0.08 0.00 0.13 0 0 0</pose>
           <geometry><box><size>0.16 0.16 0.20</size></box></geometry>
-          <material><diffuse>0.18 0.42 0.82 1</diffuse></material>
+          <material><diffuse>0.20 0.66 0.32 1</diffuse></material>
         </visual>
 
-        <visual name="item_box_green">
-          <pose>0.08 0.25 0.13 0 0 0</pose>
+        <visual name="item_box_green_2">
+          <pose>0.08 0.26 0.13 0 0 0</pose>
           <geometry><box><size>0.16 0.16 0.20</size></box></geometry>
           <material><diffuse>0.20 0.66 0.32 1</diffuse></material>
         </visual>
@@ -295,21 +278,21 @@
           <material><diffuse>0.22 0.25 0.28 1</diffuse></material>
         </visual>
 
-        <!-- Visible inventory boxes; tags will be added later. -->
-        <visual name="item_box_red">
-          <pose>0.08 -0.25 0.13 0 0 0</pose>
-          <geometry><box><size>0.16 0.16 0.20</size></box></geometry>
-          <material><diffuse>0.80 0.20 0.16 1</diffuse></material>
-        </visual>
-
-        <visual name="item_box_blue">
-          <pose>0.08 0 0.13 0 0 0</pose>
+        <!-- Shelf 3: two blue boxes and one green box. -->
+        <visual name="item_box_blue_1">
+          <pose>0.08 -0.26 0.13 0 0 0</pose>
           <geometry><box><size>0.16 0.16 0.20</size></box></geometry>
           <material><diffuse>0.18 0.42 0.82 1</diffuse></material>
         </visual>
 
-        <visual name="item_box_green">
-          <pose>0.08 0.25 0.13 0 0 0</pose>
+        <visual name="item_box_blue_2">
+          <pose>0.08 0.00 0.13 0 0 0</pose>
+          <geometry><box><size>0.16 0.16 0.20</size></box></geometry>
+          <material><diffuse>0.18 0.42 0.82 1</diffuse></material>
+        </visual>
+
+        <visual name="item_box_green_1">
+          <pose>0.08 0.26 0.13 0 0 0</pose>
           <geometry><box><size>0.16 0.16 0.20</size></box></geometry>
           <material><diffuse>0.20 0.66 0.32 1</diffuse></material>
         </visual>

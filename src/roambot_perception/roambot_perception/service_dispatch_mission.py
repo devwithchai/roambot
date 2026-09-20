@@ -1,3 +1,4 @@
+import json
 import math
 import re
 import time
@@ -66,11 +67,22 @@ class ServiceDispatchMission(BasicNavigator):
         self.pending_shelf = None
         self.granted_doors = set()
         self.current_map_pose = None
+        self.active_shelf = None
 
         self.status_pub = self.create_publisher(
             String,
             "inventory/dispatch_status",
             10,
+        )
+        self.state_pub = self.create_publisher(
+            String,
+            "/warehouse/service_state",
+            report_qos,
+        )
+        self.route_decision_pub = self.create_publisher(
+            String,
+            "/warehouse/service_route_decision",
+            report_qos,
         )
         self.traffic_request_pub = self.create_publisher(
             String,
@@ -114,6 +126,89 @@ class ServiceDispatchMission(BasicNavigator):
         self.status_pub.publish(message)
         self.get_logger().info(text)
 
+    def publish_state(
+        self,
+        state,
+        current_shelf=None,
+        message=None,
+    ):
+        status = String()
+        status.data = json.dumps(
+            {
+                "state": state,
+                "current_shelf": current_shelf,
+                "message": message or "",
+            }
+        )
+        self.state_pub.publish(status)
+
+    def publish_route_decision(self, purpose, candidates, selected):
+        feasible_candidates = [
+            candidate
+            for candidate in candidates
+            if math.isfinite(candidate["cost"])
+        ]
+        selected_data = None
+        explanation = "No feasible Nav2 route was found."
+
+        if selected is not None and math.isfinite(selected["cost"]):
+            selected_data = {
+                "door_name": selected["door_name"],
+                "clearance_name": selected["clearance_name"],
+                "distance_m": round(selected["cost"], 2),
+            }
+            other_costs = sorted(
+                candidate["cost"]
+                for candidate in feasible_candidates
+                if (
+                    candidate["door_name"] != selected["door_name"]
+                    or candidate["clearance_name"]
+                    != selected["clearance_name"]
+                )
+            )
+
+            if not other_costs:
+                explanation = (
+                    "This is the only feasible Nav2 route."
+                )
+            elif other_costs[0] > selected["cost"] + 0.005:
+                explanation = (
+                    "Shortest feasible Nav2 path: "
+                    f"{other_costs[0] - selected['cost']:.2f} m "
+                    "shorter than the next option."
+                )
+            else:
+                explanation = (
+                    "Tied for the shortest feasible Nav2 path."
+                )
+
+        route_message = String()
+        route_message.data = json.dumps(
+            {
+                "robot": "service",
+                "purpose": purpose,
+                "selection_policy": "shortest_feasible_nav2_path",
+                "selected": selected_data,
+                "candidates": [
+                    {
+                        "door_name": candidate["door_name"],
+                        "clearance_name": candidate[
+                            "clearance_name"
+                        ],
+                        "distance_m": (
+                            round(candidate["cost"], 2)
+                            if math.isfinite(candidate["cost"])
+                            else None
+                        ),
+                        "feasible": math.isfinite(candidate["cost"]),
+                    }
+                    for candidate in candidates
+                ],
+                "explanation": explanation,
+            }
+        )
+        self.route_decision_pub.publish(route_message)
+
     def scan_report_callback(self, message):
         self.confirmed_shelves = {
             shelf_name: int(tag_id)
@@ -145,6 +240,11 @@ class ServiceDispatchMission(BasicNavigator):
             return
 
         self.pending_shelf = shelf_name
+        self.publish_state(
+            "queued",
+            current_shelf=shelf_name,
+            message=f"Service dispatch accepted for {shelf_name}.",
+        )
         self.get_logger().info(
             f"Dispatch accepted for {shelf_name}."
         )
@@ -305,6 +405,7 @@ class ServiceDispatchMission(BasicNavigator):
             namespace="service",
         )
         best_route = None
+        candidates = []
 
         try:
             for door_name, doorway in DOORWAYS.items():
@@ -318,6 +419,12 @@ class ServiceDispatchMission(BasicNavigator):
                         shelf,
                     ]
                     cost = self.route_cost(planner, waypoints)
+                    candidate = {
+                        "door_name": door_name,
+                        "clearance_name": clearance_name,
+                        "cost": cost,
+                    }
+                    candidates.append(candidate)
 
                     self.get_logger().info(
                         f"Outbound candidate {door_name} via "
@@ -328,14 +435,15 @@ class ServiceDispatchMission(BasicNavigator):
                         best_route is None
                         or cost < best_route["cost"]
                     ):
-                        best_route = {
-                            "door_name": door_name,
-                            "clearance_name": clearance_name,
-                            "cost": cost,
-                        }
+                        best_route = candidate
         finally:
             planner.destroyNode()
 
+        self.publish_route_decision(
+            f"outbound_to_{shelf['name']}",
+            candidates,
+            best_route,
+        )
         return best_route
 
     def choose_return_route(self):
@@ -350,6 +458,7 @@ class ServiceDispatchMission(BasicNavigator):
             namespace="service",
         )
         best_route = None
+        candidates = []
 
         try:
             for door_name, doorway in DOORWAYS.items():
@@ -363,6 +472,12 @@ class ServiceDispatchMission(BasicNavigator):
                         SERVICE_DESK_BAY,
                     ]
                     cost = self.route_cost(planner, waypoints)
+                    candidate = {
+                        "door_name": door_name,
+                        "clearance_name": clearance_name,
+                        "cost": cost,
+                    }
+                    candidates.append(candidate)
 
                     self.get_logger().info(
                         f"Return candidate {door_name} via "
@@ -373,14 +488,15 @@ class ServiceDispatchMission(BasicNavigator):
                         best_route is None
                         or cost < best_route["cost"]
                     ):
-                        best_route = {
-                            "door_name": door_name,
-                            "clearance_name": clearance_name,
-                            "cost": cost,
-                        }
+                        best_route = candidate
         finally:
             planner.destroyNode()
 
+        self.publish_route_decision(
+            "return_to_desk",
+            candidates,
+            best_route,
+        )
         return best_route
 
     def request_door(self, door_name):
@@ -430,6 +546,49 @@ class ServiceDispatchMission(BasicNavigator):
             position.y - point["y"],
         )
 
+    def finish_door_navigation(
+        self,
+        door_name,
+        exit_point,
+        poses,
+    ):
+        released = False
+
+        for attempt in range(2):
+            self.goThroughPoses(poses)
+
+            while not self.isTaskComplete():
+                rclpy.spin_once(self, timeout_sec=0.1)
+
+                if (
+                    not released
+                    and self.distance_to(exit_point)
+                    <= DOOR_RELEASE_DISTANCE
+                ):
+                    self.release_door(door_name)
+                    released = True
+
+            if self.getResult() == TaskResult.SUCCEEDED:
+                if not released:
+                    self.release_door(door_name)
+                return True
+
+            if released:
+                return False
+
+            if attempt == 0:
+                self.get_logger().warning(
+                    f"Service could not continue through {door_name}. "
+                    "Retrying once."
+                )
+                self.wait_for_seconds(1.0)
+
+        self.get_logger().error(
+            f"Service did not clear {door_name}; "
+            "the doorway remains reserved for safety."
+        )
+        return False
+
     def navigate_through_door(
         self,
         door_name,
@@ -437,22 +596,27 @@ class ServiceDispatchMission(BasicNavigator):
         exit_point,
         destination,
         destination_label,
+        mission_state,
+        current_shelf=None,
     ):
         entry = self.make_transit_point(entry_point, exit_point)
         exit_point = self.make_transit_point(exit_point, destination)
-        poses = [
-            self.make_goal(entry["x"], entry["y"], entry["yaw"]),
-            self.make_goal(
-                exit_point["x"],
-                exit_point["y"],
-                exit_point["yaw"],
-            ),
-            self.make_goal(
-                destination["x"],
-                destination["y"],
-                destination["yaw"],
-            ),
-        ]
+        entry_goal = self.make_goal(
+            entry["x"],
+            entry["y"],
+            entry["yaw"],
+        )
+        exit_goal = self.make_goal(
+            exit_point["x"],
+            exit_point["y"],
+            exit_point["yaw"],
+        )
+        destination_goal = self.make_goal(
+            destination["x"],
+            destination["y"],
+            destination["yaw"],
+        )
+        poses = [entry_goal, exit_goal, destination_goal]
 
         self.get_logger().info(
             f"Navigating through {door_name} to {destination_label}."
@@ -481,6 +645,14 @@ class ServiceDispatchMission(BasicNavigator):
                     self.get_logger().info(
                         f"Service waiting before {door_name}."
                     )
+                    self.publish_state(
+                        "waiting_for_door",
+                        current_shelf=current_shelf,
+                        message=(
+                            "Service is waiting for traffic clearance at "
+                            f"{door_name}."
+                        ),
+                    )
                     self.cancelTask()
 
                     while not self.isTaskComplete():
@@ -489,11 +661,23 @@ class ServiceDispatchMission(BasicNavigator):
                     if not self.wait_for_door(door_name):
                         return False
 
-                    granted = True
-                    self.get_logger().info(
-                        f"Service received access to {door_name}."
+                    self.publish_state(
+                        mission_state,
+                        current_shelf=current_shelf,
+                        message=(
+                            "Service received traffic clearance for "
+                            f"{door_name}."
+                        ),
                     )
-                    self.goThroughPoses(poses)
+                    self.get_logger().info(
+                        f"Service received access to {door_name}. "
+                        "Continuing through the doorway."
+                    )
+                    return self.finish_door_navigation(
+                        door_name,
+                        exit_point,
+                        [exit_goal, destination_goal],
+                    )
 
             if (
                 granted
@@ -503,10 +687,17 @@ class ServiceDispatchMission(BasicNavigator):
                 self.release_door(door_name)
                 released = True
 
-        if granted and not released:
-            self.release_door(door_name)
+        succeeded = self.getResult() == TaskResult.SUCCEEDED
 
-        return self.getResult() == TaskResult.SUCCEEDED
+        if succeeded and granted and not released:
+            self.release_door(door_name)
+        elif granted and not released:
+            self.get_logger().error(
+                f"Service did not clear {door_name}; "
+                "the doorway remains reserved for safety."
+            )
+
+        return succeeded
 
     def travel_to_shelf(self, shelf):
         route = self.choose_outbound_route(shelf)
@@ -531,9 +722,16 @@ class ServiceDispatchMission(BasicNavigator):
             doorway[clearance_name],
             shelf,
             shelf["name"],
+            "travelling_to_shelf",
+            shelf["name"],
         )
 
     def return_to_desk(self):
+        self.publish_state(
+            "returning",
+            current_shelf=self.active_shelf,
+            message="Service is returning to its desk.",
+        )
         self.get_logger().info(
             "Service task complete. Selecting a return route to the desk."
         )
@@ -560,11 +758,22 @@ class ServiceDispatchMission(BasicNavigator):
             doorway["service_side"],
             SERVICE_DESK_BAY,
             "Service desk bay",
+            "returning",
+            self.active_shelf,
         ):
             self.publish_status(
                 "Service returned to the service-room desk."
             )
+            self.publish_state(
+                "idle",
+                message="Service is parked at its desk.",
+            )
+            self.active_shelf = None
         else:
+            self.publish_state(
+                "failed",
+                message="Service could not return to its desk bay.",
+            )
             self.get_logger().warning(
                 "Service crossed safely but could not reach "
                 "its desk bay."
@@ -572,18 +781,34 @@ class ServiceDispatchMission(BasicNavigator):
 
     def dispatch_to_shelf(self, shelf_name):
         shelf = SHELF_POSES[shelf_name]
+        self.active_shelf = shelf_name
 
+        self.publish_state(
+            "travelling_to_shelf",
+            current_shelf=shelf_name,
+            message=f"Service is travelling to {shelf_name}.",
+        )
         self.get_logger().info(
             f"Service navigating to {shelf_name}."
         )
 
         if self.travel_to_shelf(shelf):
+            self.publish_state(
+                "at_shelf",
+                current_shelf=shelf_name,
+                message=f"Service reached {shelf_name}.",
+            )
             self.publish_status(
                 f"Service reached {shelf_name} "
                 f"for inventory tag id={shelf['id']}"
             )
             self.return_to_desk()
         else:
+            self.publish_state(
+                "failed",
+                current_shelf=shelf_name,
+                message=f"Service could not reach {shelf_name}.",
+            )
             self.publish_status(
                 f"Service could not reach {shelf_name}"
             )
@@ -597,6 +822,10 @@ class ServiceDispatchMission(BasicNavigator):
         if not self.wait_for_map_pose():
             return
 
+        self.publish_state(
+            "idle",
+            message="Service is ready for inventory dispatch.",
+        )
         self.get_logger().info(
             "Ready. Send shelf_1, shelf_2, or shelf_3 "
             "to /service/inventory/dispatch_request."

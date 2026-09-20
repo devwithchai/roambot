@@ -1,3 +1,5 @@
+from glob import glob
+
 from setuptools import find_packages, setup
 
 package_name = 'roambot_perception'
@@ -10,6 +12,10 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        (
+            'share/' + package_name + '/rviz',
+            glob('rviz/*.rviz'),
+        ),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -34,6 +40,8 @@ setup(
             "roambot_perception.warehouse_task_coordinator:main",
             "doorway_traffic_manager = "
             "roambot_perception.doorway_traffic_manager:main",
+            "warehouse_mission_console = "
+            "roambot_perception.warehouse_mission_console:main",
         ],
     },
 )
