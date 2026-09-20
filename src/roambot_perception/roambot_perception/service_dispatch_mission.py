@@ -457,6 +457,49 @@ class ServiceDispatchMission(BasicNavigator):
             position.y - point["y"],
         )
 
+    def finish_door_navigation(
+        self,
+        door_name,
+        exit_point,
+        poses,
+    ):
+        released = False
+
+        for attempt in range(2):
+            self.goThroughPoses(poses)
+
+            while not self.isTaskComplete():
+                rclpy.spin_once(self, timeout_sec=0.1)
+
+                if (
+                    not released
+                    and self.distance_to(exit_point)
+                    <= DOOR_RELEASE_DISTANCE
+                ):
+                    self.release_door(door_name)
+                    released = True
+
+            if self.getResult() == TaskResult.SUCCEEDED:
+                if not released:
+                    self.release_door(door_name)
+                return True
+
+            if released:
+                return False
+
+            if attempt == 0:
+                self.get_logger().warning(
+                    f"Service could not continue through {door_name}. "
+                    "Retrying once."
+                )
+                self.wait_for_seconds(1.0)
+
+        self.get_logger().error(
+            f"Service did not clear {door_name}; "
+            "the doorway remains reserved for safety."
+        )
+        return False
+
     def navigate_through_door(
         self,
         door_name,
@@ -467,19 +510,22 @@ class ServiceDispatchMission(BasicNavigator):
     ):
         entry = self.make_transit_point(entry_point, exit_point)
         exit_point = self.make_transit_point(exit_point, destination)
-        poses = [
-            self.make_goal(entry["x"], entry["y"], entry["yaw"]),
-            self.make_goal(
-                exit_point["x"],
-                exit_point["y"],
-                exit_point["yaw"],
-            ),
-            self.make_goal(
-                destination["x"],
-                destination["y"],
-                destination["yaw"],
-            ),
-        ]
+        entry_goal = self.make_goal(
+            entry["x"],
+            entry["y"],
+            entry["yaw"],
+        )
+        exit_goal = self.make_goal(
+            exit_point["x"],
+            exit_point["y"],
+            exit_point["yaw"],
+        )
+        destination_goal = self.make_goal(
+            destination["x"],
+            destination["y"],
+            destination["yaw"],
+        )
+        poses = [entry_goal, exit_goal, destination_goal]
 
         self.get_logger().info(
             f"Navigating through {door_name} to {destination_label}."
@@ -516,11 +562,15 @@ class ServiceDispatchMission(BasicNavigator):
                     if not self.wait_for_door(door_name):
                         return False
 
-                    granted = True
                     self.get_logger().info(
-                        f"Service received access to {door_name}."
+                        f"Service received access to {door_name}. "
+                        "Continuing through the doorway."
                     )
-                    self.goThroughPoses(poses)
+                    return self.finish_door_navigation(
+                        door_name,
+                        exit_point,
+                        [exit_goal, destination_goal],
+                    )
 
             if (
                 granted
@@ -530,10 +580,17 @@ class ServiceDispatchMission(BasicNavigator):
                 self.release_door(door_name)
                 released = True
 
-        if granted and not released:
-            self.release_door(door_name)
+        succeeded = self.getResult() == TaskResult.SUCCEEDED
 
-        return self.getResult() == TaskResult.SUCCEEDED
+        if succeeded and granted and not released:
+            self.release_door(door_name)
+        elif granted and not released:
+            self.get_logger().error(
+                f"Service did not clear {door_name}; "
+                "the doorway remains reserved for safety."
+            )
+
+        return succeeded
 
     def travel_to_shelf(self, shelf):
         route = self.choose_outbound_route(shelf)
