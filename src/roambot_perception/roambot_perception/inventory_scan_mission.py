@@ -1,3 +1,4 @@
+import json
 import math
 import re
 import time
@@ -60,6 +61,10 @@ class InventoryScanMission(BasicNavigator):
         self.observed_ids = set()
         self.granted_doors = set()
         self.current_map_pose = None
+        self.scan_requested = False
+        self.scan_running = False
+
+        self.declare_parameter("auto_start", True)
 
         report_qos = QoSProfile(
             depth=1,
@@ -70,6 +75,11 @@ class InventoryScanMission(BasicNavigator):
         self.report_pub = self.create_publisher(
             String,
             "inventory/scan_report",
+            report_qos,
+        )
+        self.inspection_status_pub = self.create_publisher(
+            String,
+            "/warehouse/inspection_status",
             report_qos,
         )
         self.traffic_request_pub = self.create_publisher(
@@ -87,6 +97,12 @@ class InventoryScanMission(BasicNavigator):
             String,
             "inventory/detections",
             self.detection_callback,
+            10,
+        )
+        self.create_subscription(
+            String,
+            "/warehouse/inspection_request",
+            self.inspection_request_callback,
             10,
         )
         self.create_subscription(
@@ -123,6 +139,45 @@ class InventoryScanMission(BasicNavigator):
         pose.header = message.header
         pose.pose = message.pose.pose
         self.current_map_pose = pose
+
+    def publish_inspection_status(
+        self,
+        state,
+        current_shelf=None,
+        message=None,
+    ):
+        status = String()
+        status.data = json.dumps(
+            {
+                "state": state,
+                "current_shelf": current_shelf,
+                "message": message or "",
+            }
+        )
+        self.inspection_status_pub.publish(status)
+
+    def inspection_request_callback(self, message):
+        command = message.data.strip().lower()
+
+        if command not in ("scan", "rescan", "start"):
+            self.publish_inspection_status(
+                "idle",
+                message="Invalid inspection command.",
+            )
+            return
+
+        if self.scan_running:
+            self.publish_inspection_status(
+                "scanning",
+                message="Scout inspection is already running.",
+            )
+            return
+
+        self.scan_requested = True
+        self.publish_inspection_status(
+            "queued",
+            message="Scout inspection request accepted.",
+        )
 
     def make_goal(self, x, y, yaw):
         goal = PoseStamped()
@@ -475,25 +530,63 @@ class InventoryScanMission(BasicNavigator):
         return f"{shelf['name']}: {nav_state}, no tag detected"
 
     def run_scan(self):
+        self.scan_running = True
+        self.publish_inspection_status(
+            "scanning",
+            message="Scout inspection started.",
+        )
+
+        try:
+            results = []
+            for shelf in INSPECTION_POSES:
+                self.publish_inspection_status(
+                    "scanning",
+                    current_shelf=shelf["name"],
+                    message=f"Inspecting {shelf['name']}.",
+                )
+                result = self.inspect_shelf(shelf)
+                results.append(result)
+                self.get_logger().info(result)
+
+            report = String()
+            report.data = " | ".join(results)
+            self.report_pub.publish(report)
+            self.get_logger().info(
+                f"Scan complete: {report.data}"
+            )
+
+            self.publish_inspection_status(
+                "returning",
+                message="Inspection complete. Scout is returning to its desk.",
+            )
+            self.return_to_desk()
+            self.publish_inspection_status(
+                "complete",
+                message="Scout inspection complete.",
+            )
+        finally:
+            self.scan_running = False
+
+    def run(self):
         self.get_logger().info(
             "Waiting for Scout Nav2 and AMCL..."
         )
         self.waitUntilNav2Active()
 
-        results = []
-        for shelf in INSPECTION_POSES:
-            result = self.inspect_shelf(shelf)
-            results.append(result)
-            self.get_logger().info(result)
+        if self.get_parameter("auto_start").value:
+            self.scan_requested = True
+        else:
+            self.publish_inspection_status(
+                "idle",
+                message="Scout is ready for an inspection request.",
+            )
 
-        report = String()
-        report.data = " | ".join(results)
-        self.report_pub.publish(report)
-        self.get_logger().info(
-            f"Scan complete: {report.data}"
-        )
+        while rclpy.ok():
+            rclpy.spin_once(self, timeout_sec=0.2)
 
-        self.return_to_desk()
+            if self.scan_requested and not self.scan_running:
+                self.scan_requested = False
+                self.run_scan()
 
 
 def main():
@@ -501,7 +594,7 @@ def main():
     mission = InventoryScanMission()
 
     try:
-        mission.run_scan()
+        mission.run()
     except KeyboardInterrupt:
         pass
     finally:
