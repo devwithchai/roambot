@@ -82,6 +82,11 @@ class InventoryScanMission(BasicNavigator):
             "/warehouse/inspection_status",
             report_qos,
         )
+        self.route_decision_pub = self.create_publisher(
+            String,
+            "/warehouse/scout_route_decision",
+            report_qos,
+        )
         self.traffic_request_pub = self.create_publisher(
             String,
             "/warehouse/traffic/request",
@@ -155,6 +160,73 @@ class InventoryScanMission(BasicNavigator):
             }
         )
         self.inspection_status_pub.publish(status)
+
+    def publish_route_decision(self, purpose, candidates, selected):
+        feasible_candidates = [
+            candidate
+            for candidate in candidates
+            if math.isfinite(candidate["cost"])
+        ]
+        selected_data = None
+        explanation = "No feasible Nav2 route was found."
+
+        if selected is not None and math.isfinite(selected["cost"]):
+            selected_data = {
+                "door_name": selected["door_name"],
+                "clearance_name": selected["clearance_name"],
+                "distance_m": round(selected["cost"], 2),
+            }
+            other_costs = sorted(
+                candidate["cost"]
+                for candidate in feasible_candidates
+                if (
+                    candidate["door_name"] != selected["door_name"]
+                    or candidate["clearance_name"]
+                    != selected["clearance_name"]
+                )
+            )
+
+            if not other_costs:
+                explanation = (
+                    "This is the only feasible Nav2 route."
+                )
+            elif other_costs[0] > selected["cost"] + 0.005:
+                explanation = (
+                    "Shortest feasible Nav2 path: "
+                    f"{other_costs[0] - selected['cost']:.2f} m "
+                    "shorter than the next option."
+                )
+            else:
+                explanation = (
+                    "Tied for the shortest feasible Nav2 path."
+                )
+
+        route_message = String()
+        route_message.data = json.dumps(
+            {
+                "robot": "scout",
+                "purpose": purpose,
+                "selection_policy": "shortest_feasible_nav2_path",
+                "selected": selected_data,
+                "candidates": [
+                    {
+                        "door_name": candidate["door_name"],
+                        "clearance_name": candidate[
+                            "clearance_name"
+                        ],
+                        "distance_m": (
+                            round(candidate["cost"], 2)
+                            if math.isfinite(candidate["cost"])
+                            else None
+                        ),
+                        "feasible": math.isfinite(candidate["cost"]),
+                    }
+                    for candidate in candidates
+                ],
+                "explanation": explanation,
+            }
+        )
+        self.route_decision_pub.publish(route_message)
 
     def inspection_request_callback(self, message):
         command = message.data.strip().lower()
@@ -295,6 +367,7 @@ class InventoryScanMission(BasicNavigator):
         )
 
         best_route = None
+        candidates = []
 
         try:
             for door_name, doorway in DOORWAYS.items():
@@ -308,6 +381,12 @@ class InventoryScanMission(BasicNavigator):
                         SCOUT_DESK_BAY,
                     ]
                     cost = self.route_cost(planner, waypoints)
+                    candidate = {
+                        "door_name": door_name,
+                        "clearance_name": clearance_name,
+                        "cost": cost,
+                    }
+                    candidates.append(candidate)
 
                     self.get_logger().info(
                         f"Route candidate {door_name} via "
@@ -318,14 +397,15 @@ class InventoryScanMission(BasicNavigator):
                         best_route is None
                         or cost < best_route["cost"]
                     ):
-                        best_route = {
-                            "door_name": door_name,
-                            "clearance_name": clearance_name,
-                            "cost": cost,
-                        }
+                        best_route = candidate
         finally:
             planner.destroyNode()
 
+        self.publish_route_decision(
+            "return_to_desk",
+            candidates,
+            best_route,
+        )
         return best_route
 
     def request_door(self, door_name):
@@ -472,6 +552,13 @@ class InventoryScanMission(BasicNavigator):
                     self.get_logger().info(
                         f"Scout waiting before {door_name}."
                     )
+                    self.publish_inspection_status(
+                        "waiting_for_door",
+                        message=(
+                            "Scout is waiting for traffic clearance at "
+                            f"{door_name}."
+                        ),
+                    )
                     self.cancelTask()
 
                     while not self.isTaskComplete():
@@ -480,6 +567,13 @@ class InventoryScanMission(BasicNavigator):
                     if not self.wait_for_door(door_name):
                         return False
 
+                    self.publish_inspection_status(
+                        "returning",
+                        message=(
+                            "Scout received traffic clearance for "
+                            f"{door_name}."
+                        ),
+                    )
                     self.get_logger().info(
                         f"Scout received access to {door_name}. "
                         "Continuing through the doorway."
