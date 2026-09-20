@@ -7,8 +7,10 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 
 
+MISSION_NODES_DELAY = 38.0
+
+
 def generate_launch_description():
-    # Locate installed ROS package folders.
     simulation_share = get_package_share_directory("roambot_simulation")
     navigation_share = get_package_share_directory("roambot_navigation")
 
@@ -23,7 +25,7 @@ def generate_launch_description():
         )
     )
 
-    # 2. Start both independent Nav2 stacks.
+    # 2. Start both independent Nav2 stacks in a staggered sequence.
     navigation = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
@@ -70,17 +72,15 @@ def generate_launch_description():
         output="screen",
     )
 
-    # Gazebo begins first. The navigation launch itself has its own
-    # Scout/Service startup delays.
+    # Gazebo starts first. warehouse_nav2.launch.py then starts Scout and
+    # Service Nav2 separately. Start perception only after both stacks have
+    # had time to create their lifecycle services.
     delayed_navigation = TimerAction(
         period=4.0,
         actions=[navigation],
     )
-
-    # Start mission-support nodes after the simulated robots and camera
-    # have had time to appear. The nodes also wait safely for Nav2/report data.
     delayed_mission_nodes = TimerAction(
-        period=16.0,
+        period=MISSION_NODES_DELAY,
         actions=[
             detector,
             scanner,
