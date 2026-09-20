@@ -600,6 +600,10 @@ class ServiceDispatchMission(BasicNavigator):
                 message="Service is parked at its desk.",
             )
         else:
+            self.publish_state(
+                "failed",
+                message="Service could not return to its desk bay.",
+            )
             self.get_logger().warning(
                 "Service crossed safely but could not reach "
                 "its desk bay."
