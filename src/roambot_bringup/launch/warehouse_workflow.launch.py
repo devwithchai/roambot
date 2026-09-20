@@ -41,21 +41,29 @@ def generate_launch_description():
         output="screen",
     )
 
-    # 4. Service receives shelf-dispatch commands and navigates there.
+    # 4. Scout waits for a GUI inspection request.
+    scanner = Node(
+        package="roambot_perception",
+        executable="inventory_scan_mission",
+        parameters=[{"auto_start": False}],
+        output="screen",
+    )
+
+    # 5. Service receives shelf-dispatch commands and navigates there.
     service_dispatcher = Node(
         package="roambot_perception",
         executable="service_dispatch_mission",
         output="screen",
     )
 
-    # 5. Coordinator converts inventory-ID requests into Service tasks.
+    # 6. Coordinator converts inventory-ID requests into Service tasks.
     coordinator = Node(
         package="roambot_perception",
         executable="warehouse_task_coordinator",
         output="screen",
     )
 
-    # 6. Grants one robot at a time access to a shared doorway.
+    # 7. Grants one robot at a time access to a shared doorway.
     traffic_manager = Node(
         package="roambot_perception",
         executable="doorway_traffic_manager",
@@ -75,6 +83,7 @@ def generate_launch_description():
         period=16.0,
         actions=[
             detector,
+            scanner,
             service_dispatcher,
             coordinator,
             traffic_manager,
