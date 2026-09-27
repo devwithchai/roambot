@@ -42,6 +42,12 @@ setup(
             "roambot_perception.doorway_traffic_manager:main",
             "warehouse_mission_console = "
             "roambot_perception.warehouse_mission_console:main",
+            "warehouse_operations_service = "
+            "roambot_perception.warehouse_operations_service:main",
+            "warehouse_operations_scout = "
+            "roambot_perception.warehouse_operations_scout:main",
+            "warehouse_operations_coordinator = "
+            "roambot_perception.warehouse_operations_coordinator:main",
         ],
     },
 )
