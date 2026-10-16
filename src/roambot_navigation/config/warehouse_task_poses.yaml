@@ -1,0 +1,40 @@
+work_tasks:
+  receiving_work:
+    allowed_robots: ["service"]
+    pose: [-4.70, 4.70, 3.141592653589793]
+
+  handover_work:
+    allowed_robots: ["service"]
+    pose: [-4.50, -3.60, 3.141592653589793]
+
+  packout_work:
+    allowed_robots: ["service"]
+    pose: [4.00, -3.60, 0.0]
+
+  shelf_10_work:
+    allowed_robots: ["scout"]
+    pose: [5.30, 2.00]
+    face_point: [6.15, 2.00]
+
+  shelf_11_work:
+    allowed_robots: ["scout"]
+    pose: [5.30, 3.50]
+    face_point: [6.15, 3.50]
+
+  shelf_12_work:
+    allowed_robots: ["scout"]
+    pose: [5.30, 5.00]
+    face_point: [6.15, 5.00]
+
+access_points:
+  receiving_access_door_1: [-4.50, 2.00]
+  receiving_access_door_2: [-1.90, 3.52]
+
+  handover_access_door_1: [-4.50, -2.00]
+  handover_access_door_2: [-2.00, -3.60]
+
+  packout_access_door_1: [4.50, -1.80]
+  packout_access_door_2: [1.67, -3.60]
+
+  storage_access_door_1: [4.32, 1.56]
+  storage_access_door_2: [1.76, 3.43]

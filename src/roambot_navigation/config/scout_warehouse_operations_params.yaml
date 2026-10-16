@@ -51,8 +51,9 @@ bt_navigator:
     global_frame: map
     robot_base_frame: scout/base_footprint
     odom_topic: /scout/odom
-    bt_loop_duration: 10
-    default_server_timeout: 20
+    bt_loop_duration: 50
+    default_server_timeout: 1000
+    default_cancel_timeout: 1000
     wait_for_service_timeout: 1000
     action_server_result_timeout: 900.0
     navigators: ["navigate_to_pose", "navigate_through_poses"]
@@ -75,7 +76,7 @@ bt_navigator:
 
 controller_server:
   ros__parameters:
-    controller_frequency: 20.0
+    controller_frequency: 10.0
     costmap_update_timeout: 0.30
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.5
@@ -146,7 +147,8 @@ local_costmap:
       width: 3
       height: 3
       resolution: 0.05
-      robot_radius: 0.18
+      footprint: "[[0.44, 0.28], [0.44, -0.28], [-0.38, -0.28], [-0.38, 0.28]]"
+      footprint_padding: 0.01
       plugins: ["voxel_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
@@ -184,10 +186,11 @@ global_costmap:
       publish_frequency: 1.0
       global_frame: map
       robot_base_frame: scout/base_footprint
-      robot_radius: 0.18
+      footprint: "[[0.44, 0.28], [0.44, -0.28], [-0.38, -0.28], [-0.38, 0.28]]"
+      footprint_padding: 0.01
       resolution: 0.05
       track_unknown_space: true
-      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+      plugins: ["static_layer", "inflation_layer"]
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
@@ -208,7 +211,7 @@ global_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 5.0
-        inflation_radius: 0.35
+        inflation_radius: 0.55
       always_send_full_costmap: True
 
 # The yaml_filename does not need to be specified since it going to be set by defaults in launch.
@@ -227,13 +230,13 @@ map_saver:
 
 planner_server:
   ros__parameters:
-    expected_planner_frequency: 20.0
+    expected_planner_frequency: 5.0
     planner_plugins: ["GridBased"]
     costmap_update_timeout: 1.0
     GridBased:
       plugin: "nav2_navfn_planner::NavfnPlanner"
       tolerance: 0.5
-      use_astar: false
+      use_astar: true
       allow_unknown: true
 
 smoother_server:
@@ -308,7 +311,7 @@ route_server:
 
 velocity_smoother:
   ros__parameters:
-    smoothing_frequency: 20.0
+    smoothing_frequency: 10.0
     stamp_smoothed_velocity_with_smoothing_time: False
     scale_velocities: False
     feedback: "OPEN_LOOP"
@@ -354,7 +357,7 @@ collision_monitor:
 
 docking_server:
   ros__parameters:
-    controller_frequency: 50.0
+    controller_frequency: 10.0
     initial_perception_timeout: 5.0
     wait_charge_timeout: 5.0
     dock_approach_timeout: 30.0

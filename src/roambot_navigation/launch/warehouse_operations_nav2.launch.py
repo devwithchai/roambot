@@ -96,7 +96,7 @@ def generate_launch_description():
     map_file = os.path.join(
         navigation_share,
         "maps",
-        "roambot_warehouse_operations.yaml",
+        "roambot_warehouse_20261014.yaml",
     )
     scout_params = os.path.join(
         navigation_share,

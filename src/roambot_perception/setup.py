@@ -48,6 +48,8 @@ setup(
             "roambot_perception.warehouse_operations_scout:main",
             "warehouse_operations_coordinator = "
             "roambot_perception.warehouse_operations_coordinator:main",
+            "tag_alignment = "
+            "roambot_perception.tag_alignment:main",
         ],
     },
 )

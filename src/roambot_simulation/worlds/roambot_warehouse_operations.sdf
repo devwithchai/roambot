@@ -1,35 +1,27 @@
-<?xml version="1.0" ?>
+<?xml version="1.0" encoding="utf-8"?>
 <sdf version="1.9">
-  <world name="warehouse">
-
+  <world name="roambot_warehouse">
     <physics name="default_physics" type="ignored">
       <max_step_size>0.001</max_step_size>
       <real_time_factor>1.0</real_time_factor>
     </physics>
-
-    <plugin filename="gz-sim-physics-system"
-            name="gz::sim::systems::Physics"/>
-    <plugin filename="gz-sim-user-commands-system"
-            name="gz::sim::systems::UserCommands"/>
-    <plugin filename="gz-sim-scene-broadcaster-system"
-            name="gz::sim::systems::SceneBroadcaster"/>
-    <plugin filename="gz-sim-sensors-system"
-            name="gz::sim::systems::Sensors">
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics" />
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands" />
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster" />
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
       <render_engine>ogre2</render_engine>
     </plugin>
-
     <scene>
       <background>0.09 0.11 0.14 1</background>
       <ambient>0.45 0.45 0.45 1</ambient>
     </scene>
-
     <light type="directional" name="sun">
       <pose>0 0 10 0 0 0</pose>
       <cast_shadows>true</cast_shadows>
       <diffuse>0.85 0.85 0.85 1</diffuse>
       <direction>-0.5 0.2 -0.9</direction>
     </light>
-
+    <!-- Warehouse floor: 16 x 12 m. -->
     <model name="ground_plane">
       <static>true</static>
       <link name="link">
@@ -37,16 +29,15 @@
           <geometry>
             <plane>
               <normal>0 0 1</normal>
-              <size>10 6</size>
+              <size>16 12</size>
             </plane>
           </geometry>
         </collision>
-
         <visual name="visual">
           <geometry>
             <plane>
               <normal>0 0 1</normal>
-              <size>10 6</size>
+              <size>16 12</size>
             </plane>
           </geometry>
           <material>
@@ -55,536 +46,826 @@
         </visual>
       </link>
     </model>
-
-    <!-- Outer walls and centre divider with two doors -->
-    <model name="warehouse_shell">
+    <!-- Outer walls: 2 m high, 0.12 m thick. -->
+    <model name="warehouse_walls">
       <static>true</static>
       <link name="link">
-
         <collision name="north_collision">
-          <pose>0 3 0.45 0 0 0</pose>
-          <geometry><box><size>10.12 0.12 0.90</size></box></geometry>
+          <pose>0 6 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>16.12 0.12 2</size>
+            </box>
+          </geometry>
         </collision>
         <visual name="north_visual">
-          <pose>0 3 0.45 0 0 0</pose>
-          <geometry><box><size>10.12 0.12 0.90</size></box></geometry>
-          <material><diffuse>0.58 0.60 0.63 1</diffuse></material>
+          <pose>0 6 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>16.12 0.12 2</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.70 0.59 0.45 1</diffuse>
+          </material>
         </visual>
-
         <collision name="south_collision">
-          <pose>0 -3 0.45 0 0 0</pose>
-          <geometry><box><size>10.12 0.12 0.90</size></box></geometry>
+          <pose>0 -6 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>16.12 0.12 2</size>
+            </box>
+          </geometry>
         </collision>
         <visual name="south_visual">
-          <pose>0 -3 0.45 0 0 0</pose>
-          <geometry><box><size>10.12 0.12 0.90</size></box></geometry>
-          <material><diffuse>0.58 0.60 0.63 1</diffuse></material>
+          <pose>0 -6 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>16.12 0.12 2</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.70 0.59 0.45 1</diffuse>
+          </material>
         </visual>
-
         <collision name="east_collision">
-          <pose>5 0 0.45 0 0 0</pose>
-          <geometry><box><size>0.12 6.12 0.90</size></box></geometry>
+          <pose>8 0 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.12 12.12 2</size>
+            </box>
+          </geometry>
         </collision>
         <visual name="east_visual">
-          <pose>5 0 0.45 0 0 0</pose>
-          <geometry><box><size>0.12 6.12 0.90</size></box></geometry>
-          <material><diffuse>0.58 0.60 0.63 1</diffuse></material>
+          <pose>8 0 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.12 12.12 2</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.70 0.59 0.45 1</diffuse>
+          </material>
         </visual>
-
         <collision name="west_collision">
-          <pose>-5 0 0.45 0 0 0</pose>
-          <geometry><box><size>0.12 6.12 0.90</size></box></geometry>
+          <pose>-8 0 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.12 12.12 2</size>
+            </box>
+          </geometry>
         </collision>
         <visual name="west_visual">
-          <pose>-5 0 0.45 0 0 0</pose>
-          <geometry><box><size>0.12 6.12 0.90</size></box></geometry>
-          <material><diffuse>0.58 0.60 0.63 1</diffuse></material>
-        </visual>
-
-        <collision name="divider_north_collision">
-          <pose>0.20 2.38 0.45 0 0 0</pose>
-          <geometry><box><size>0.14 1.24 0.90</size></box></geometry>
-        </collision>
-        <visual name="divider_north_visual">
-          <pose>0.20 2.38 0.45 0 0 0</pose>
-          <geometry><box><size>0.14 1.24 0.90</size></box></geometry>
-          <material><diffuse>0.12 0.20 0.28 1</diffuse></material>
-        </visual>
-
-        <collision name="divider_centre_collision">
-          <pose>0.20 0 0.45 0 0 0</pose>
-          <geometry><box><size>0.14 1.50 0.90</size></box></geometry>
-        </collision>
-        <visual name="divider_centre_visual">
-          <pose>0.20 0 0.45 0 0 0</pose>
-          <geometry><box><size>0.14 1.50 0.90</size></box></geometry>
-          <material><diffuse>0.12 0.20 0.28 1</diffuse></material>
-        </visual>
-
-        <collision name="divider_south_collision">
-          <pose>0.20 -2.38 0.45 0 0 0</pose>
-          <geometry><box><size>0.14 1.24 0.90</size></box></geometry>
-        </collision>
-        <visual name="divider_south_visual">
-          <pose>0.20 -2.38 0.45 0 0 0</pose>
-          <geometry><box><size>0.14 1.24 0.90</size></box></geometry>
-          <material><diffuse>0.12 0.20 0.28 1</diffuse></material>
+          <pose>-8 0 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.12 12.12 2</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.70 0.59 0.45 1</diffuse>
+          </material>
         </visual>
       </link>
     </model>
-
-    <!-- Floor markings -->
-    <model name="floor_markings">
+    <!--
+      Four rooms surround shared 2.2 m corridors.
+      Each room door is 2 m wide; corridor intersections are passing zones.
+      Room order: Receiving (NW), Storage (NE), Handover (SW), Packout (SE).
+    -->
+    <model name="room_partitions">
       <static>true</static>
       <link name="link">
-        <visual name="service_lane">
-          <pose>-0.85 0 0.012 0 0 0</pose>
-          <geometry><box><size>0.06 5.40 0.02</size></box></geometry>
-          <material><diffuse>0.14 0.70 0.78 1</diffuse></material>
+        <!-- Side walls of the north rooms; 2 m door gaps at y=3.5. -->
+        <collision name="west_north_wall_a">
+          <pose>-1.1 1.8 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.12 1.4 2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="west_north_wall_a_v">
+          <pose>-1.1 1.8 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.12 1.4 2</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.51 0.56 0.49 1</diffuse>
+          </material>
         </visual>
-
-        <visual name="upper_door_mark">
-          <pose>0.20 1.25 0.012 0 0 0</pose>
-          <geometry><box><size>1.02 0.08 0.02</size></box></geometry>
-          <material><diffuse>0.95 0.70 0.12 1</diffuse></material>
+        <collision name="west_north_wall_b">
+          <pose>-1.1 5.25 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.12 1.5 2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="west_north_wall_b_v">
+          <pose>-1.1 5.25 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.12 1.5 2</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.51 0.56 0.49 1</diffuse>
+          </material>
         </visual>
-
-        <visual name="lower_door_mark">
-          <pose>0.20 -1.25 0.012 0 0 0</pose>
-          <geometry><box><size>1.02 0.08 0.02</size></box></geometry>
-          <material><diffuse>0.95 0.70 0.12 1</diffuse></material>
+        <collision name="east_north_wall_a">
+          <pose>1.1 1.8 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.12 1.4 2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="east_north_wall_a_v">
+          <pose>1.1 1.8 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.12 1.4 2</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.51 0.56 0.49 1</diffuse>
+          </material>
         </visual>
-
-        <visual name="receiving_zone_mark">
-          <pose>-3.10 1.20 0.012 0 0 0</pose>
-          <geometry><box><size>2.10 0.05 0.02</size></box></geometry>
-          <material><diffuse>0.14 0.70 0.78 1</diffuse></material>
+        <collision name="east_north_wall_b">
+          <pose>1.1 5.25 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.12 1.5 2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="east_north_wall_b_v">
+          <pose>1.1 5.25 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.12 1.5 2</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.51 0.56 0.49 1</diffuse>
+          </material>
         </visual>
-
-        <visual name="packout_zone_mark">
-          <pose>-3.10 -0.55 0.012 0 0 0</pose>
-          <geometry><box><size>2.10 0.05 0.02</size></box></geometry>
-          <material><diffuse>0.14 0.70 0.78 1</diffuse></material>
+        <!-- Side walls of the south rooms; 2 m door gaps at y=-3.5. -->
+        <collision name="west_south_wall_a">
+          <pose>-1.1 -5.25 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.12 1.5 2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="west_south_wall_a_v">
+          <pose>-1.1 -5.25 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.12 1.5 2</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.51 0.56 0.49 1</diffuse>
+          </material>
+        </visual>
+        <collision name="west_south_wall_b">
+          <pose>-1.1 -1.8 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.12 1.4 2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="west_south_wall_b_v">
+          <pose>-1.1 -1.8 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.12 1.4 2</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.51 0.56 0.49 1</diffuse>
+          </material>
+        </visual>
+        <collision name="east_south_wall_a">
+          <pose>1.1 -5.25 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.12 1.5 2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="east_south_wall_a_v">
+          <pose>1.1 -5.25 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.12 1.5 2</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.51 0.56 0.49 1</diffuse>
+          </material>
+        </visual>
+        <collision name="east_south_wall_b">
+          <pose>1.1 -1.8 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.12 1.4 2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="east_south_wall_b_v">
+          <pose>1.1 -1.8 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.12 1.4 2</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.51 0.56 0.49 1</diffuse>
+          </material>
+        </visual>
+        <!-- North room fronts; 2 m doors on each room face the corridor. -->
+        <collision name="receiving_wall_a">
+          <pose>-6.75 1.1 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.5 0.12 2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="receiving_wall_a_v">
+          <pose>-6.75 1.1 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.5 0.12 2</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.51 0.56 0.49 1</diffuse>
+          </material>
+        </visual>
+        <collision name="receiving_wall_b">
+          <pose>-2.3 1.1 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.4 0.12 2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="receiving_wall_b_v">
+          <pose>-2.3 1.1 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.4 0.12 2</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.51 0.56 0.49 1</diffuse>
+          </material>
+        </visual>
+        <collision name="storage_wall_a">
+          <pose>2.3 1.1 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.4 0.12 2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="storage_wall_a_v">
+          <pose>2.3 1.1 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.4 0.12 2</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.51 0.56 0.49 1</diffuse>
+          </material>
+        </visual>
+        <collision name="storage_wall_b">
+          <pose>6.75 1.1 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.5 0.12 2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="storage_wall_b_v">
+          <pose>6.75 1.1 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.5 0.12 2</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.51 0.56 0.49 1</diffuse>
+          </material>
+        </visual>
+        <!-- South room fronts; 2 m doors on each room face the corridor. -->
+        <collision name="handover_wall_a">
+          <pose>-6.75 -1.1 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.5 0.12 2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="handover_wall_a_v">
+          <pose>-6.75 -1.1 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.5 0.12 2</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.51 0.56 0.49 1</diffuse>
+          </material>
+        </visual>
+        <collision name="handover_wall_b">
+          <pose>-2.3 -1.1 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.4 0.12 2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="handover_wall_b_v">
+          <pose>-2.3 -1.1 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.4 0.12 2</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.51 0.56 0.49 1</diffuse>
+          </material>
+        </visual>
+        <collision name="packout_wall_a">
+          <pose>2.3 -1.1 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.4 0.12 2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="packout_wall_a_v">
+          <pose>2.3 -1.1 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.4 0.12 2</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.51 0.56 0.49 1</diffuse>
+          </material>
+        </visual>
+        <collision name="packout_wall_b">
+          <pose>6.75 -1.1 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.5 0.12 2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="packout_wall_b_v">
+          <pose>6.75 -1.1 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.5 0.12 2</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.51 0.56 0.49 1</diffuse>
+          </material>
         </visual>
       </link>
     </model>
-
-    <!-- Receiving -->
+    <!-- Colored floor bands mark the shared 2.2 m robot corridors. -->
+    <model name="shared_corridor_markings">
+      <static>true</static>
+      <link name="link">
+        <visual name="east_west_corridor">
+          <pose>0 0 0.006 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>15.9 2.2 0.01</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.16 0.23 0.27 1</diffuse>
+          </material>
+        </visual>
+        <visual name="north_south_corridor">
+          <pose>0 0 0.007 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.2 11.9 0.01</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.16 0.23 0.27 1</diffuse>
+          </material>
+        </visual>
+        <visual name="junction_yield_pocket">
+          <pose>0 0 0.014 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.5 1.5 0.01</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.18 0.42 0.30 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <!-- Receiving room: inbound totes and pallet staging. -->
     <model name="receiving_station">
       <static>true</static>
-      <pose>-3.15 1.95 0 0 0 0</pose>
+      <pose>-6.15 4.7 0 0 0 0</pose>
       <link name="link">
         <collision name="base_collision">
-          <pose>0 0 0.35 0 0 0</pose>
-          <geometry><box><size>1.70 0.70 0.70</size></box></geometry>
+          <pose>0 0 0.14 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.7 0.7 0.28</size>
+            </box>
+          </geometry>
         </collision>
-
+        <collision name="counter_collision">
+          <pose>0 0 0.32 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.9 0.82 0.04</size>
+            </box>
+          </geometry>
+        </collision>
         <visual name="base">
-          <pose>0 0 0.35 0 0 0</pose>
-          <geometry><box><size>1.70 0.70 0.70</size></box></geometry>
-          <material><diffuse>0.15 0.18 0.21 1</diffuse></material>
+          <pose>0 0 0.14 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.7 0.7 0.28</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.15 0.18 0.21 1</diffuse>
+          </material>
         </visual>
-
-        <visual name="top">
-          <pose>0 0 0.74 0 0 0</pose>
-          <geometry><box><size>1.90 0.82 0.08</size></box></geometry>
-          <material><diffuse>0.56 0.58 0.60 1</diffuse></material>
+        <visual name="counter">
+          <pose>0 0 0.32 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.9 0.82 0.04</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.56 0.58 0.60 1</diffuse>
+          </material>
         </visual>
-
-        <visual name="inbound_tote_blue">
-          <pose>-0.55 0 0.94 0 0 0</pose>
-          <geometry><box><size>0.34 0.42 0.28</size></box></geometry>
-          <material><diffuse>0.16 0.42 0.82 1</diffuse></material>
+        <visual name="incoming_tote_blue">
+          <pose>-0.55 0 0.42 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.32 0.24 0.16</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.10 0.58 0.52 1</diffuse>
+          </material>
         </visual>
-
-        <visual name="inbound_tote_gray_1">
-          <pose>0 0 0.94 0 0 0</pose>
-          <geometry><box><size>0.34 0.42 0.28</size></box></geometry>
-          <material><diffuse>0.28 0.30 0.33 1</diffuse></material>
-        </visual>
-
-        <visual name="inbound_tote_gray_2">
-          <pose>0.55 0 0.94 0 0 0</pose>
-          <geometry><box><size>0.34 0.42 0.28</size></box></geometry>
-          <material><diffuse>0.28 0.30 0.33 1</diffuse></material>
+        <visual name="incoming_tote_gray">
+          <pose>0.35 0 0.42 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.32 0.24 0.16</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.91 0.38 0.24 1</diffuse>
+          </material>
         </visual>
       </link>
     </model>
-
-    <model name="pallet_receiving_area">
+    <model name="receiving_pallet">
       <static>true</static>
-      <pose>-4.49 1.20 0 0 0 0</pose>
+      <pose>-6.2 2.15 0 0 0 0</pose>
       <link name="link">
         <collision name="pallet_collision">
-          <pose>0 0 0.10 0 0 0</pose>
-          <geometry><box><size>0.70 0.70 0.20</size></box></geometry>
+          <pose>0 0 0.07 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.7 0.7 0.14</size>
+            </box>
+          </geometry>
         </collision>
-
         <visual name="pallet">
-          <pose>0 0 0.10 0 0 0</pose>
-          <geometry><box><size>0.70 0.70 0.20</size></box></geometry>
-          <material><diffuse>0.50 0.32 0.14 1</diffuse></material>
+          <pose>0 0 0.07 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.7 0.7 0.14</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.50 0.32 0.14 1</diffuse>
+          </material>
         </visual>
-
         <visual name="tote">
-          <pose>0 0 0.31 0 0 0</pose>
-          <geometry><box><size>0.48 0.48 0.22</size></box></geometry>
-          <material><diffuse>0.24 0.28 0.32 1</diffuse></material>
+          <pose>0 0 0.22 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.32 0.24 0.16</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.58 0.36 0.72 1</diffuse>
+          </material>
         </visual>
       </link>
     </model>
-
-    <!-- Packout -->
-    <model name="packout_station">
+    <!-- Storage room: shelf fronts face the approach aisle at x=4.9. -->
+    <model name="storage_shelf_10">
       <static>true</static>
-      <pose>-3.15 0.20 0 0 0 0</pose>
-      <link name="link">
-        <collision name="base_collision">
-          <pose>0 0 0.35 0 0 0</pose>
-          <geometry><box><size>1.70 0.70 0.70</size></box></geometry>
-        </collision>
-
-        <visual name="base">
-          <pose>0 0 0.35 0 0 0</pose>
-          <geometry><box><size>1.70 0.70 0.70</size></box></geometry>
-          <material><diffuse>0.15 0.18 0.21 1</diffuse></material>
-        </visual>
-
-        <visual name="top">
-          <pose>0 0 0.74 0 0 0</pose>
-          <geometry><box><size>1.90 0.82 0.08</size></box></geometry>
-          <material><diffuse>0.56 0.58 0.60 1</diffuse></material>
-        </visual>
-
-        <visual name="outbound_tote">
-          <pose>0 0 0.94 0 0 0</pose>
-          <geometry><box><size>0.40 0.46 0.28</size></box></geometry>
-          <material><diffuse>0.16 0.42 0.82 1</diffuse></material>
-        </visual>
-      </link>
-    </model>
-
-    <!-- Charging bays -->
-    <model name="scout_charge_bay">
-      <static>true</static>
-      <pose>-3.75 -1.95 0 0 0 0</pose>
-      <link name="link">
-        <visual name="pad">
-          <pose>0 0 0.015 0 0 0</pose>
-          <geometry><box><size>0.85 0.85 0.03</size></box></geometry>
-          <material><diffuse>0.12 0.56 0.64 1</diffuse></material>
-        </visual>
-
-        <collision name="post_collision">
-          <pose>-0.32 0 0.22 0 0 0</pose>
-          <geometry><box><size>0.08 0.32 0.44</size></box></geometry>
-        </collision>
-
-        <visual name="post">
-          <pose>-0.32 0 0.22 0 0 0</pose>
-          <geometry><box><size>0.08 0.32 0.44</size></box></geometry>
-          <material><diffuse>0.10 0.14 0.17 1</diffuse></material>
-        </visual>
-      </link>
-    </model>
-
-    <model name="service_charge_bay">
-      <static>true</static>
-      <pose>-2.55 -1.95 0 0 0 0</pose>
-      <link name="link">
-        <visual name="pad">
-          <pose>0 0 0.015 0 0 0</pose>
-          <geometry><box><size>0.85 0.85 0.03</size></box></geometry>
-          <material><diffuse>0.95 0.62 0.12 1</diffuse></material>
-        </visual>
-
-        <collision name="post_collision">
-          <pose>-0.32 0 0.22 0 0 0</pose>
-          <geometry><box><size>0.08 0.32 0.44</size></box></geometry>
-        </collision>
-
-        <visual name="post">
-          <pose>-0.32 0 0.22 0 0 0</pose>
-          <geometry><box><size>0.08 0.32 0.44</size></box></geometry>
-          <material><diffuse>0.10 0.14 0.17 1</diffuse></material>
-        </visual>
-      </link>
-    </model>
-
-    <!-- Shelf 3: two blue totes, one green tote -->
-    <model name="shelf_3">
-      <static>true</static>
-      <pose>3.40 1.85 0 0 0 0</pose>
+      <pose>6.55 2.0 0 0 0 0</pose>
       <link name="link">
         <collision name="rack_collision">
-          <pose>0 0 0.50 0 0 0</pose>
-          <geometry><box><size>0.58 1.30 1.00</size></box></geometry>
+          <pose>0 0 0.45 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.58 1.30 0.90</size>
+            </box>
+          </geometry>
         </collision>
-
         <visual name="back_panel">
-          <pose>0.24 0 0.50 0 0 0</pose>
-          <geometry><box><size>0.06 1.30 1.00</size></box></geometry>
-          <material><diffuse>0.12 0.15 0.18 1</diffuse></material>
+          <pose>0.24 0 0.45 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.06 1.30 0.90</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.12 0.15 0.18 1</diffuse>
+          </material>
         </visual>
-
-        <visual name="left_upright">
-          <pose>0 -0.61 0.50 0 0 0</pose>
-          <geometry><box><size>0.52 0.05 1.04</size></box></geometry>
-          <material><diffuse>0.12 0.15 0.18 1</diffuse></material>
+        <visual name="upright_left">
+          <pose>0 -0.61 0.45 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.52 0.05 0.94</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.12 0.15 0.18 1</diffuse>
+          </material>
         </visual>
-
-        <visual name="right_upright">
-          <pose>0 0.61 0.50 0 0 0</pose>
-          <geometry><box><size>0.52 0.05 1.04</size></box></geometry>
-          <material><diffuse>0.12 0.15 0.18 1</diffuse></material>
+        <visual name="upright_right">
+          <pose>0 0.61 0.45 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.52 0.05 0.94</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.12 0.15 0.18 1</diffuse>
+          </material>
         </visual>
-
-        <visual name="bottom_board">
-          <pose>0 0 0.18 0 0 0</pose>
-          <geometry><box><size>0.52 1.20 0.05</size></box></geometry>
-          <material><diffuse>0.45 0.48 0.50 1</diffuse></material>
+        <visual name="lower_shelf">
+          <pose>0 0 0.325 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.52 1.20 0.03</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.45 0.48 0.50 1</diffuse>
+          </material>
         </visual>
-
-        <visual name="middle_board">
-          <pose>0 0 0.52 0 0 0</pose>
-          <geometry><box><size>0.52 1.20 0.05</size></box></geometry>
-          <material><diffuse>0.45 0.48 0.50 1</diffuse></material>
+        <visual name="middle_shelf">
+          <pose>0 0 0.525 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.52 1.20 0.03</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.45 0.48 0.50 1</diffuse>
+          </material>
         </visual>
-
-        <visual name="top_board">
-          <pose>0 0 0.86 0 0 0</pose>
-          <geometry><box><size>0.52 1.20 0.05</size></box></geometry>
-          <material><diffuse>0.45 0.48 0.50 1</diffuse></material>
+        <visual name="top_shelf">
+          <pose>0 0 0.725 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.52 1.20 0.03</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.45 0.48 0.50 1</diffuse>
+          </material>
         </visual>
-
-        <visual name="blue_tote_1">
-          <pose>-0.06 -0.38 0.37 0 0 0</pose>
-          <geometry><box><size>0.30 0.26 0.26</size></box></geometry>
-          <material><diffuse>0.16 0.42 0.82 1</diffuse></material>
+        <visual name="blue_tote">
+          <pose>-0.06 0 0.42 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.32 0.24 0.16</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.10 0.58 0.52 1</diffuse>
+          </material>
         </visual>
-
-        <visual name="blue_tote_2">
-          <pose>-0.06 0 0.37 0 0 0</pose>
-          <geometry><box><size>0.30 0.26 0.26</size></box></geometry>
-          <material><diffuse>0.16 0.42 0.82 1</diffuse></material>
+      </link>
+    </model>
+    <model name="storage_shelf_11">
+      <static>true</static>
+      <pose>6.55 3.5 0 0 0 0</pose>
+      <link name="link">
+        <collision name="rack_collision">
+          <pose>0 0 0.45 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.58 1.30 0.90</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="back_panel">
+          <pose>0.24 0 0.45 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.06 1.30 0.90</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.12 0.15 0.18 1</diffuse>
+          </material>
         </visual>
-
+        <visual name="upright_left">
+          <pose>0 -0.61 0.45 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.52 0.05 0.94</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.12 0.15 0.18 1</diffuse>
+          </material>
+        </visual>
+        <visual name="upright_right">
+          <pose>0 0.61 0.45 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.52 0.05 0.94</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.12 0.15 0.18 1</diffuse>
+          </material>
+        </visual>
+        <visual name="lower_shelf">
+          <pose>0 0 0.325 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.52 1.20 0.03</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.45 0.48 0.50 1</diffuse>
+          </material>
+        </visual>
+        <visual name="middle_shelf">
+          <pose>0 0 0.525 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.52 1.20 0.03</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.45 0.48 0.50 1</diffuse>
+          </material>
+        </visual>
+        <visual name="top_shelf">
+          <pose>0 0 0.725 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.52 1.20 0.03</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.45 0.48 0.50 1</diffuse>
+          </material>
+        </visual>
         <visual name="green_tote">
-          <pose>-0.06 0.38 0.37 0 0 0</pose>
-          <geometry><box><size>0.30 0.26 0.26</size></box></geometry>
-          <material><diffuse>0.20 0.66 0.32 1</diffuse></material>
+          <pose>-0.06 0 0.62 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.32 0.24 0.16</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.48 0.65 0.30 1</diffuse>
+          </material>
         </visual>
       </link>
     </model>
-
-    <!-- Shelf 2: one red tote, two green totes -->
-    <model name="shelf_2">
+    <model name="storage_shelf_12">
       <static>true</static>
-      <pose>3.40 0 0 0 0 0</pose>
+      <pose>6.55 5.0 0 0 0 0</pose>
       <link name="link">
         <collision name="rack_collision">
-          <pose>0 0 0.50 0 0 0</pose>
-          <geometry><box><size>0.58 1.30 1.00</size></box></geometry>
+          <pose>0 0 0.45 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.58 1.30 0.90</size>
+            </box>
+          </geometry>
         </collision>
-
         <visual name="back_panel">
-          <pose>0.24 0 0.50 0 0 0</pose>
-          <geometry><box><size>0.06 1.30 1.00</size></box></geometry>
-          <material><diffuse>0.12 0.15 0.18 1</diffuse></material>
+          <pose>0.24 0 0.45 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.06 1.30 0.90</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.12 0.15 0.18 1</diffuse>
+          </material>
         </visual>
-
-        <visual name="left_upright">
-          <pose>0 -0.61 0.50 0 0 0</pose>
-          <geometry><box><size>0.52 0.05 1.04</size></box></geometry>
-          <material><diffuse>0.12 0.15 0.18 1</diffuse></material>
+        <visual name="upright_left">
+          <pose>0 -0.61 0.45 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.52 0.05 0.94</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.12 0.15 0.18 1</diffuse>
+          </material>
         </visual>
-
-        <visual name="right_upright">
-          <pose>0 0.61 0.50 0 0 0</pose>
-          <geometry><box><size>0.52 0.05 1.04</size></box></geometry>
-          <material><diffuse>0.12 0.15 0.18 1</diffuse></material>
+        <visual name="upright_right">
+          <pose>0 0.61 0.45 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.52 0.05 0.94</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.12 0.15 0.18 1</diffuse>
+          </material>
         </visual>
-
-        <visual name="bottom_board">
-          <pose>0 0 0.18 0 0 0</pose>
-          <geometry><box><size>0.52 1.20 0.05</size></box></geometry>
-          <material><diffuse>0.45 0.48 0.50 1</diffuse></material>
+        <visual name="lower_shelf">
+          <pose>0 0 0.325 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.52 1.20 0.03</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.45 0.48 0.50 1</diffuse>
+          </material>
         </visual>
-
-        <visual name="middle_board">
-          <pose>0 0 0.52 0 0 0</pose>
-          <geometry><box><size>0.52 1.20 0.05</size></box></geometry>
-          <material><diffuse>0.45 0.48 0.50 1</diffuse></material>
+        <visual name="middle_shelf">
+          <pose>0 0 0.525 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.52 1.20 0.03</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.45 0.48 0.50 1</diffuse>
+          </material>
         </visual>
-
-        <visual name="top_board">
-          <pose>0 0 0.86 0 0 0</pose>
-          <geometry><box><size>0.52 1.20 0.05</size></box></geometry>
-          <material><diffuse>0.45 0.48 0.50 1</diffuse></material>
+        <visual name="top_shelf">
+          <pose>0 0 0.725 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.52 1.20 0.03</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.45 0.48 0.50 1</diffuse>
+          </material>
         </visual>
-
         <visual name="red_tote">
-          <pose>-0.06 -0.38 0.37 0 0 0</pose>
-          <geometry><box><size>0.30 0.26 0.26</size></box></geometry>
-          <material><diffuse>0.80 0.20 0.16 1</diffuse></material>
-        </visual>
-
-        <visual name="green_tote_1">
-          <pose>-0.06 0 0.37 0 0 0</pose>
-          <geometry><box><size>0.30 0.26 0.26</size></box></geometry>
-          <material><diffuse>0.20 0.66 0.32 1</diffuse></material>
-        </visual>
-
-        <visual name="green_tote_2">
-          <pose>-0.06 0.38 0.37 0 0 0</pose>
-          <geometry><box><size>0.30 0.26 0.26</size></box></geometry>
-          <material><diffuse>0.20 0.66 0.32 1</diffuse></material>
+          <pose>-0.06 0 0.82 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.32 0.24 0.16</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.91 0.38 0.24 1</diffuse>
+          </material>
         </visual>
       </link>
     </model>
-
-    <!-- Shelf 1: intentionally empty -->
-    <model name="shelf_1">
-      <static>true</static>
-      <pose>3.40 -1.85 0 0 0 0</pose>
-      <link name="link">
-        <collision name="rack_collision">
-          <pose>0 0 0.50 0 0 0</pose>
-          <geometry><box><size>0.58 1.30 1.00</size></box></geometry>
-        </collision>
-
-        <visual name="back_panel">
-          <pose>0.24 0 0.50 0 0 0</pose>
-          <geometry><box><size>0.06 1.30 1.00</size></box></geometry>
-          <material><diffuse>0.12 0.15 0.18 1</diffuse></material>
-        </visual>
-
-        <visual name="left_upright">
-          <pose>0 -0.61 0.50 0 0 0</pose>
-          <geometry><box><size>0.52 0.05 1.04</size></box></geometry>
-          <material><diffuse>0.12 0.15 0.18 1</diffuse></material>
-        </visual>
-
-        <visual name="right_upright">
-          <pose>0 0.61 0.50 0 0 0</pose>
-          <geometry><box><size>0.52 0.05 1.04</size></box></geometry>
-          <material><diffuse>0.12 0.15 0.18 1</diffuse></material>
-        </visual>
-
-        <visual name="bottom_board">
-          <pose>0 0 0.18 0 0 0</pose>
-          <geometry><box><size>0.52 1.20 0.05</size></box></geometry>
-          <material><diffuse>0.45 0.48 0.50 1</diffuse></material>
-        </visual>
-
-        <visual name="middle_board">
-          <pose>0 0 0.52 0 0 0</pose>
-          <geometry><box><size>0.52 1.20 0.05</size></box></geometry>
-          <material><diffuse>0.45 0.48 0.50 1</diffuse></material>
-        </visual>
-
-        <visual name="top_board">
-          <pose>0 0 0.86 0 0 0</pose>
-          <geometry><box><size>0.52 1.20 0.05</size></box></geometry>
-          <material><diffuse>0.45 0.48 0.50 1</diffuse></material>
-        </visual>
-      </link>
-    </model>
-
-    <!-- Tote buffer -->
-    <model name="tote_buffer">
-      <static>true</static>
-      <pose>4.25 -2.35 0 0 0 0</pose>
-      <link name="link">
-        <collision name="pallet_collision">
-          <pose>0 0 0.10 0 0 0</pose>
-          <geometry><box><size>0.80 0.80 0.20</size></box></geometry>
-        </collision>
-
-        <visual name="pallet">
-          <pose>0 0 0.10 0 0 0</pose>
-          <geometry><box><size>0.80 0.80 0.20</size></box></geometry>
-          <material><diffuse>0.50 0.32 0.14 1</diffuse></material>
-        </visual>
-
-        <visual name="tote_1">
-          <pose>-0.20 -0.20 0.31 0 0 0</pose>
-          <geometry><box><size>0.28 0.28 0.22</size></box></geometry>
-          <material><diffuse>0.28 0.30 0.33 1</diffuse></material>
-        </visual>
-
-        <visual name="tote_2">
-          <pose>0.20 -0.20 0.31 0 0 0</pose>
-          <geometry><box><size>0.28 0.28 0.22</size></box></geometry>
-          <material><diffuse>0.28 0.30 0.33 1</diffuse></material>
-        </visual>
-
-        <visual name="tote_3">
-          <pose>-0.20 0.20 0.31 0 0 0</pose>
-          <geometry><box><size>0.28 0.28 0.22</size></box></geometry>
-          <material><diffuse>0.28 0.30 0.33 1</diffuse></material>
-        </visual>
-      </link>
-    </model>
-
-    <!-- Safety bollards -->
-    <model name="safety_bollard_1">
-      <static>true</static>
-      <pose>-1.85 -2.17 0.30 0 0 0</pose>
-      <link name="link">
-        <collision name="collision">
-          <geometry><cylinder><radius>0.08</radius><length>0.60</length></cylinder></geometry>
-        </collision>
-        <visual name="visual">
-          <geometry><cylinder><radius>0.08</radius><length>0.60</length></cylinder></geometry>
-          <material><diffuse>0.95 0.70 0.12 1</diffuse></material>
-        </visual>
-      </link>
-    </model>
-
-    <model name="safety_bollard_2">
-      <static>true</static>
-      <pose>-1.85 -1.76 0.30 0 0 0</pose>
-      <link name="link">
-        <collision name="collision">
-          <geometry><cylinder><radius>0.08</radius><length>0.60</length></cylinder></geometry>
-        </collision>
-        <visual name="visual">
-          <geometry><cylinder><radius>0.08</radius><length>0.60</length></cylinder></geometry>
-          <material><diffuse>0.95 0.70 0.12 1</diffuse></material>
-        </visual>
-      </link>
-    </model>
-
-    <!-- Temporary v3 robot spawn markings -->
-    <model name="scout_start_zone">
-      <static>true</static>
-      <pose>-1.20 -1.90 0 0 0 0</pose>
-      <link name="link">
-        <visual name="visual">
-          <pose>0 0 0.012 0 0 0</pose>
-          <geometry><box><size>0.70 0.70 0.02</size></box></geometry>
-          <material><diffuse>0.12 0.56 0.64 1</diffuse></material>
-        </visual>
-      </link>
-    </model>
-
-    <model name="service_start_zone">
-      <static>true</static>
-      <pose>-1.20 1.90 0 0 0 0</pose>
-      <link name="link">
-        <visual name="visual">
-          <pose>0 0 0.012 0 0 0</pose>
-          <geometry><box><size>0.70 0.70 0.02</size></box></geometry>
-          <material><diffuse>0.95 0.62 0.12 1</diffuse></material>
-        </visual>
-      </link>
-    </model>
-
-    <!-- Existing inventory tags, moved to the new racks -->
+    <!-- 0.26 x 0.26 m ArUco tag planes; texture files must be installed at these URIs. -->
     <model name="inventory_tag_10">
       <static>true</static>
-      <pose>3.09 -1.85 0.16 0 0 0</pose>
+      <pose>6.15 2.0 0.16 0 0 0</pose>
       <link name="link">
         <visual name="marker">
           <pose>0 0 0 0 -1.57079632679 0</pose>
@@ -609,10 +890,9 @@
         </visual>
       </link>
     </model>
-
     <model name="inventory_tag_11">
       <static>true</static>
-      <pose>3.09 0 0.16 0 0 0</pose>
+      <pose>6.15 3.5 0.16 0 0 0</pose>
       <link name="link">
         <visual name="marker">
           <pose>0 0 0 0 -1.57079632679 0</pose>
@@ -637,10 +917,9 @@
         </visual>
       </link>
     </model>
-
     <model name="inventory_tag_12">
       <static>true</static>
-      <pose>3.09 1.85 0.16 0 0 0</pose>
+      <pose>6.15 5.0 0.16 0 0 0</pose>
       <link name="link">
         <visual name="marker">
           <pose>0 0 0 0 -1.57079632679 0</pose>
@@ -665,6 +944,440 @@
         </visual>
       </link>
     </model>
-
+    <!-- Handover room: 0.88 x 0.88 m top supports three 0.32 x 0.24 m totes. -->
+    <model name="tote_buffer">
+      <static>true</static>
+      <pose>-5.6 -3.6 0 0 0 0</pose>
+      <link name="link">
+        <collision name="base_collision">
+          <pose>0 0 0.15 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.80 0.80 0.30</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="top_collision">
+          <pose>0 0 0.32 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.88 0.88 0.04</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="base">
+          <pose>0 0 0.15 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.80 0.80 0.30</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.50 0.32 0.14 1</diffuse>
+          </material>
+        </visual>
+        <visual name="top">
+          <pose>0 0 0.32 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.88 0.88 0.04</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.56 0.58 0.60 1</diffuse>
+          </material>
+        </visual>
+        <visual name="tote_1">
+          <pose>-0.20 -0.20 0.42 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.32 0.24 0.16</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.58 0.36 0.72 1</diffuse>
+          </material>
+        </visual>
+        <visual name="tote_2">
+          <pose>0.20 -0.20 0.42 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.32 0.24 0.16</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.10 0.58 0.52 1</diffuse>
+          </material>
+        </visual>
+        <visual name="tote_3">
+          <pose>0 0.20 0.42 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.32 0.24 0.16</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.91 0.38 0.24 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <!-- Charging bays are in the handover room, clear of the shared aisle. -->
+    <model name="scout_charge_bay">
+      <static>true</static>
+      <pose>-6.7 -5.15 0 0 0 0</pose>
+      <link name="link">
+        <visual name="pad">
+          <pose>0 0 0.015 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.20 0.90 0.03</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.12 0.56 0.64 1</diffuse>
+          </material>
+        </visual>
+        <collision name="post_collision">
+          <pose>-0.55 0 0.38 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.08 0.32 0.76</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="post">
+          <pose>-0.55 0 0.38 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.08 0.32 0.76</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.10 0.14 0.17 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="service_charge_bay">
+      <static>true</static>
+      <pose>-4.9 -5.15 0 0 0 0</pose>
+      <link name="link">
+        <visual name="pad">
+          <pose>0 0 0.015 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.20 0.90 0.03</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.95 0.62 0.12 1</diffuse>
+          </material>
+        </visual>
+        <collision name="post_collision">
+          <pose>-0.55 0 0.38 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.08 0.32 0.76</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="post">
+          <pose>-0.55 0 0.38 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.08 0.32 0.76</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.10 0.14 0.17 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <!-- Packout room: outbound tote staging and order completion. -->
+    <model name="packout_station">
+      <static>true</static>
+      <pose>5.6 -3.6 0 0 0 0</pose>
+      <link name="link">
+        <collision name="base_collision">
+          <pose>0 0 0.14 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.70 0.70 0.28</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="counter_collision">
+          <pose>0 0 0.32 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.90 0.82 0.04</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="base">
+          <pose>0 0 0.14 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.70 0.70 0.28</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.15 0.18 0.21 1</diffuse>
+          </material>
+        </visual>
+        <visual name="counter">
+          <pose>0 0 0.32 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.90 0.82 0.04</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.56 0.58 0.60 1</diffuse>
+          </material>
+        </visual>
+        <visual name="outbound_tote">
+          <pose>0 0 0.42 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.32 0.24 0.16</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.58 0.36 0.72 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <!--
+      Floor markers show example approach, work, and exit locations.
+      They are visual guides; navigation poses must be configured in the robot stack.
+    -->
+    <model name="receiving_access_door_1_marker">
+      <static>true</static>
+      <pose>-4.5 2.0 0.012 0 0 0</pose>
+      <link name="link">
+        <visual name="marker">
+          <geometry>
+            <box>
+              <size>0.35 0.35 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.62 0.34 0.78 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="receiving_work_marker">
+      <static>true</static>
+      <pose>-4.7 4.7 0.012 0 0 0</pose>
+      <link name="link">
+        <visual name="marker">
+          <geometry>
+            <box>
+              <size>0.35 0.35 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.95 0.39 0.16 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="receiving_access_door_2_marker">
+      <static>true</static>
+      <pose>-1.90 3.52 0.01 0 0 0</pose>
+      <link name="link">
+        <visual name="marker">
+          <geometry>
+            <box>
+              <size>0.35 0.35 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.62 0.34 0.78 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="handover_access_door_1_marker">
+      <static>true</static>
+      <pose>-4.5 -2.0 0.012 0 0 0</pose>
+      <link name="link">
+        <visual name="marker">
+          <geometry>
+            <box>
+              <size>0.35 0.35 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.62 0.34 0.78 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="handover_work_marker">
+      <static>true</static>
+      <pose>-4.5 -3.6 0.012 0 0 0</pose>
+      <link name="link">
+        <visual name="marker">
+          <geometry>
+            <box>
+              <size>0.35 0.35 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.95 0.39 0.16 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="handover_access_door_2_marker">
+      <static>true</static>
+      <pose>-2.0 -3.6 0.012 0 0 0</pose>
+      <link name="link">
+        <visual name="marker">
+          <geometry>
+            <box>
+              <size>0.35 0.35 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.62 0.34 0.78 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="packout_access_door_1_marker">
+      <static>true</static>
+      <pose>4.5 -1.8 0.012 0 0 0</pose>
+      <link name="link">
+        <visual name="marker">
+          <geometry>
+            <box>
+              <size>0.35 0.35 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.62 0.34 0.78 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="packout_work_marker">
+      <static>true</static>
+      <pose>4.0 -3.6 0.012 0 0 0</pose>
+      <link name="link">
+        <visual name="marker">
+          <geometry>
+            <box>
+              <size>0.35 0.35 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.95 0.39 0.16 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="packout_access_door_2_marker">
+      <static>true</static>
+      <pose>1.67 -3.60 0.01 0 0 0</pose>
+      <link name="link">
+        <visual name="marker">
+          <geometry>
+            <box>
+              <size>0.35 0.35 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.62 0.34 0.78 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="storage_access_door_1_marker">
+      <static>true</static>
+      <pose>4.32 1.56 0.01 0 0 0</pose>
+      <link name="link">
+        <visual name="marker">
+          <geometry>
+            <box>
+              <size>0.35 0.35 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.62 0.34 0.78 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="storage_access_door_2_marker">
+      <static>true</static>
+      <pose>1.76 3.43 0.01 0 0 0</pose>
+      <link name="link">
+        <visual name="marker">
+          <geometry>
+            <box>
+              <size>0.35 0.35 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.62 0.34 0.78 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="shelf_10_work_marker">
+      <static>true</static>
+      <pose>5.3 2.0 0.012 0 0 0</pose>
+      <link name="link">
+        <visual name="marker">
+          <geometry>
+            <box>
+              <size>0.35 0.35 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.95 0.39 0.16 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="shelf_11_work_marker">
+      <static>true</static>
+      <pose>5.3 3.5 0.012 0 0 0</pose>
+      <link name="link">
+        <visual name="marker">
+          <geometry>
+            <box>
+              <size>0.35 0.35 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.95 0.39 0.16 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="shelf_12_work_marker">
+      <static>true</static>
+      <pose>5.3 5.0 0.012 0 0 0</pose>
+      <link name="link">
+        <visual name="marker">
+          <geometry>
+            <box>
+              <size>0.35 0.35 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>0.95 0.39 0.16 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
   </world>
 </sdf>

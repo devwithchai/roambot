@@ -28,6 +28,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'task_navigator = roambot_navigation.task_navigator:main',
         ],
     },
 )
