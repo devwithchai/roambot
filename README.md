@@ -4,6 +4,34 @@
 
 The project uses a custom differential-drive robot in Gazebo and Nav2 for navigation. It has grown from a single-robot navigation baseline into a two-robot warehouse workflow with Scout and Service roles. The active `feat/v3-warehouse-operations` branch develops task-oriented warehouse operations on top of that foundation.
 
+## Demo video
+
+[Watch the RoamBot warehouse demo](https://github.com/user-attachments/assets/219687f8-087e-4c82-be4c-8bf297d3dd17)
+
+## Demo snapshots
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img width="380" alt="RoamBot custom robot model in RViz" src="https://github.com/user-attachments/assets/b30d3729-7beb-4162-bad1-ed2a762698ed" />
+      <br />
+      <sub>Custom differential-drive robot model</sub>
+    </td>
+    <td width="50%" align="center">
+      <img width="380" alt="Scout inspecting warehouse inventory tags" src="https://github.com/user-attachments/assets/057703f7-1a48-42fa-bee7-ea4a7b35d7d6" />
+      <br />
+      <sub>Scout inventory inspection</sub>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <img width="460" alt="Coordinated Scout and Service warehouse workflow" src="https://github.com/user-attachments/assets/b124b820-8b90-4771-a85b-6f053366ad59" />
+      <br />
+      <sub>Coordinated Scout and Service warehouse workflow</sub>
+    </td>
+  </tr>
+</table>
+
 > **Project status:** V3 warehouse operations are under active development. The current work includes named work poses, operation-specific Nav2 configuration, and visual tag-alignment experiments. Build and Python syntax checks have passed in the current development workspace; a complete end-to-end V3 runtime test is still to be confirmed.
 
 ## What RoamBot is building toward
