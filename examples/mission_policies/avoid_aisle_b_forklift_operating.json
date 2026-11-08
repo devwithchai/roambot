@@ -1,0 +1,14 @@
+{
+  "policy_id": "forklift_aisle_restriction_001",
+  "robots": ["scout"],
+  "condition": {
+    "event": "forklift_operating",
+    "aisle": "B"
+  },
+  "constraints": {
+    "restricted_regions": ["aisle_B"],
+    "preferred_routes": ["aisle_C"]
+  },
+  "priority": 80,
+  "valid": true
+}
